@@ -273,12 +273,21 @@ const app = {
       }
     });
 
-    // Comprobar si hay hash en la URL para cambiar de pestaña directamente
+    // Inicializar fecha y generador de Pollada/Camada
+    const polladaFecha = document.getElementById('pollada-fecha-nac');
+    if (polladaFecha && !polladaFecha.value) {
+      polladaFecha.valueAsDate = new Date();
+    }
+    if (typeof this.generarFilasAnillasCorrelativasPollada === 'function') {
+      this.generarFilasAnillasCorrelativasPollada();
+    }
+
+    // Comprobar si hay hash en la URL para cambiar de pestaña directamente (por defecto: Mi Censo)
     const hash = window.location.hash.replace('#', '');
-    if (hash === 'puesta') {
-      this.cambiarTab('inspeccion');
-    } else if (['registro', 'censo', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'inspeccion-insitu', 'admin'].includes(hash)) {
+    if (['censo', 'alta', 'registro', 'puesta', 'herramientas', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'inspeccion-insitu', 'admin'].includes(hash)) {
       this.cambiarTab(hash);
+    } else {
+      this.cambiarTab('censo');
     }
   },
 
@@ -1448,8 +1457,9 @@ const app = {
     const familia = document.getElementById('alta-familia').value;
     const padreId = document.getElementById('alta-padre').value || null;
     const madreId = document.getElementById('alta-madre').value || null;
-    const peso = parseFloat(document.getElementById('alta-peso').value);
-    const notas = document.getElementById('alta-notas').value.trim();
+    const pesoRaw = parseFloat(document.getElementById('alta-peso')?.value);
+    const peso = (!isNaN(pesoRaw) && pesoRaw > 0) ? pesoRaw : 0.08;
+    const notas = (document.getElementById('alta-notas')?.value || '').trim();
     const rfid = document.getElementById('alta-rfid')?.value.trim() || null;
 
     // Validar anilla duplicada
@@ -2248,6 +2258,17 @@ const app = {
 
     const animal = this.estado.animales.find(a => a.id === animalId);
     if (!animal) return;
+
+    // Verificar las 3 fotos CNZ obligatorias de adulto (Perfil lateral, Cabeza/Cresta y Tarsos)
+    const fLat = animal.fotos?.lateral || animal.multimedia_urls?.lateral;
+    const fCab = animal.fotos?.cabeza || animal.multimedia_urls?.cabeza;
+    const fTar = animal.fotos?.tarsos || animal.multimedia_urls?.tarsos;
+    if (!fLat || !fCab || !fTar) {
+      alert('📸 REQUISITO OBLIGATORIO CNZ (Adulto):\nPara emitir el Acta de Inspección Zootécnica y promover el ejemplar a Registro Definitivo (RD/RM), es obligatorio haber subido las 3 fotografías oficiales de adulto: Perfil Lateral, Cabeza/Cresta y Tarsos.\n\nPor favor, súbelas en el Módulo de Inspección Zootécnica In Situ.');
+      this.cambiarTab('inspeccion-insitu');
+      this.cargarAnimalInSitu(animalId);
+      return;
+    }
 
     const datosInsp = this.obtenerDatosInspectorActivo();
     const calificador = document.getElementById('inspeccion-calificador').value.trim() || datosInsp.nombre || 'Inspector Zootécnico';
@@ -5152,56 +5173,95 @@ const app = {
   },
 
   // =========================================================================
-  // 9. NAVEGACIÓN SPA Y MODALES AUXILIARES
+  // 9. NAVEGACIÓN SPA EN 2 NIVELES Y MODALES AUXILIARES (V6 UX)
   // =========================================================================
   cambiarTab(tabName) {
-    if (tabName === 'puesta') {
-      tabName = 'inspeccion';
-    }
+    // Normalizar alias de Alta Rápida (#tab-alta -> #tab-registro)
+    const esAltaRapida = (tabName === 'alta' || tabName === 'registro');
+    const domSectionId = esAltaRapida ? 'tab-registro' : `tab-${tabName}`;
 
     const rolActual = this.obtenerRolUsuarioActual();
 
     // Protección RBAC estricta para el Panel de Administración (Vista exclusiva Administrador)
     if (tabName === 'admin' && rolActual !== 'administrador') {
       this.mostrarNotificacionToast('🔒 Acceso restringido: El Panel de Administración es exclusivo para usuarios con rol Administrador.', 'warning');
-      tabName = 'censo';
+      return this.cambiarTab('herramientas');
     }
 
-    // Protección Modo Visitante (Solo lectura: Censo, Pedigrí y Guía de Campo ESGA025)
-    if (rolActual === 'visitante' && ['registro', 'lotes', 'inspeccion-insitu', 'admin'].includes(tabName)) {
+    // Protección Modo Visitante (Solo lectura: Censo, Pedigrí, Herramientas y Guía de Campo ESGA025)
+    if (rolActual === 'visitante' && ['alta', 'registro', 'lotes', 'inspeccion-insitu', 'admin'].includes(tabName)) {
       this.mostrarNotificacionToast('👀 Modo Visitante (Solo Lectura): Inicia sesión o regístrate para gestionar el censo, lotes o inspecciones.', 'info');
-      tabName = 'censo';
+      return this.cambiarTab('censo');
     }
 
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-nav-btn').forEach(btn => {
-      if (btn.id === 'tab-btn-inspeccion-insitu') {
-        btn.className = 'tab-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/60 shadow-sm';
-      } else if (btn.id === 'tab-btn-admin') {
-        const ocultoAdmin = rolActual !== 'administrador' ? ' hidden' : '';
-        btn.className = `tab-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition text-purple-300 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/60 shadow-sm${ocultoAdmin}`;
+    const targetTab = document.getElementById(domSectionId);
+    if (targetTab) {
+      targetTab.classList.add('active');
+    }
+
+    // Determinar cuál de los 4 botones de la Barra Inferior Móvil (Nivel 1) está activo
+    const modulosNivel2 = ['inspeccion-insitu', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'admin'];
+    let botonNivel1Activo = 'censo';
+    if (esAltaRapida) {
+      botonNivel1Activo = 'alta';
+    } else if (tabName === 'puesta') {
+      botonNivel1Activo = 'puesta';
+    } else if (tabName === 'herramientas' || modulosNivel2.includes(tabName)) {
+      botonNivel1Activo = 'herramientas';
+    }
+
+    // Actualizar estilos de los 4 botones de la Barra Inferior Fija
+    const mapaBotonesInferiores = {
+      censo: document.getElementById('nav-bottom-censo'),
+      alta: document.getElementById('nav-bottom-alta'),
+      puesta: document.getElementById('nav-bottom-puesta'),
+      herramientas: document.getElementById('nav-bottom-herramientas')
+    };
+
+    Object.entries(mapaBotonesInferiores).forEach(([clave, btn]) => {
+      if (!btn) return;
+      if (clave === botonNivel1Activo) {
+        btn.className = 'bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-amber-500/60 bg-amber-500/15 text-amber-300 font-black shadow-inner transition-all';
       } else {
-        btn.className = 'tab-nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-white hover:bg-slate-800';
+        btn.className = 'bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all';
       }
     });
 
-    const targetTab = document.getElementById(`tab-${tabName}`);
-    const targetBtn = document.getElementById(`tab-btn-${tabName}`);
+    // Actualizar sub-barra contextual en cabecera (Botón Volver al Centro de Control + Pastilla de Sección)
+    const btnVolverHerramientas = document.getElementById('btn-volver-herramientas');
+    const pillSeccion = document.getElementById('header-active-section-pill');
+    const titulosSeccion = {
+      'censo': '🐓 Mi Censo Oficial ESGA025',
+      'alta': '➕ Alta Rápida (Individual / Pollada)',
+      'registro': '➕ Alta Rápida (Individual / Pollada)',
+      'puesta': '🥚 Control de Puesta & Ponedero RFID',
+      'herramientas': '⚙️ Centro de Control Zootécnico',
+      'inspeccion-insitu': '📋 Módulo de Inspección Zootécnica (100p) & Actas',
+      'inspeccion': '📋 Calificación Morfológica RP ➔ RD/RM',
+      'pedigri': '🧬 Pedigrí 5Gen & Consanguinidad Wright',
+      'lotes': '🔄 Lotes de Cría & Regla de Gobe',
+      'mapa-gis': '🗺️ Mapa Territorial GIS & Bioseguridad',
+      'germoplasma': '❄️ Banco Oficial de Germoplasma LN₂',
+      'admin': '🛡️ Roles RBAC, Auditoría & Copias de Seguridad'
+    };
 
-    if (targetTab) targetTab.classList.add('active');
-    if (targetBtn) {
-      if (tabName === 'inspeccion-insitu') {
-        targetBtn.className = 'tab-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-black transition text-slate-950 bg-emerald-400 border-2 border-amber-300 shadow-lg';
-      } else if (tabName === 'admin') {
-        targetBtn.className = 'tab-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-black transition text-white bg-purple-600 border-2 border-amber-300 shadow-lg';
+    if (btnVolverHerramientas) {
+      if (modulosNivel2.includes(tabName)) {
+        btnVolverHerramientas.classList.remove('hidden');
+        btnVolverHerramientas.classList.add('inline-flex');
       } else {
-        targetBtn.className = 'tab-nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-amber-400 bg-slate-800 border border-amber-500/30';
+        btnVolverHerramientas.classList.add('hidden');
+        btnVolverHerramientas.classList.remove('inline-flex');
       }
     }
+    if (pillSeccion) {
+      pillSeccion.textContent = titulosSeccion[tabName] || '🐓 Mi Censo Oficial ESGA025';
+    }
 
-    window.location.hash = tabName;
+    window.location.hash = esAltaRapida ? 'alta' : tabName;
 
-    if (tabName === 'inspeccion') {
+    if (tabName === 'puesta' || tabName === 'inspeccion') {
       setTimeout(() => {
         this.renderizarAnaliticaPuesta();
         if (typeof this.renderizarModuloIncubacion === 'function') {
@@ -5258,9 +5318,11 @@ const app = {
       }
     }
 
-    // Select Padres (Machos) y Madres (Hembras)
+    // Select Padres (Machos) y Madres (Hembras) en Alta Individual y Alta de Pollada/Camada
     const selectPadre = document.getElementById('alta-padre');
     const selectMadre = document.getElementById('alta-madre');
+    const selectPolladaPadre = document.getElementById('pollada-padre');
+    const selectPolladaMadre = document.getElementById('pollada-madre');
     const selectSimMacho = document.getElementById('sim-macho');
     const selectSimHembra = document.getElementById('sim-hembra');
     const selectInsp = document.getElementById('inspeccion-animal-select');
@@ -5268,6 +5330,8 @@ const app = {
 
     if (selectPadre) selectPadre.innerHTML = '<option value="">-- Sin padre registrado / Desconocido --</option>';
     if (selectMadre) selectMadre.innerHTML = '<option value="">-- Sin madre registrada / Desconocida --</option>';
+    if (selectPolladaPadre) selectPolladaPadre.innerHTML = '<option value="">-- Sin padre registrado / Desconocido --</option>';
+    if (selectPolladaMadre) selectPolladaMadre.innerHTML = '<option value="">-- Sin madre registrada / Desconocida --</option>';
     if (selectSimMacho) selectSimMacho.innerHTML = '<option value="">-- Seleccionar Gallo --</option>';
     if (selectSimHembra) selectSimHembra.innerHTML = '<option value="">-- Seleccionar Gallina --</option>';
     if (selectInsp) selectInsp.innerHTML = '<option value="">-- Seleccionar Ejemplar para Calificar --</option>';
@@ -5283,6 +5347,12 @@ const app = {
           opt.textContent = label;
           selectPadre.appendChild(opt);
         }
+        if (selectPolladaPadre) {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.textContent = label;
+          selectPolladaPadre.appendChild(opt);
+        }
         if (selectSimMacho) {
           const opt = document.createElement('option');
           opt.value = a.id;
@@ -5295,6 +5365,12 @@ const app = {
           opt.value = a.id;
           opt.textContent = label;
           selectMadre.appendChild(opt);
+        }
+        if (selectPolladaMadre) {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.textContent = label;
+          selectPolladaMadre.appendChild(opt);
         }
         if (selectSimHembra) {
           const opt = document.createElement('option');
@@ -5347,16 +5423,19 @@ const app = {
       this.poblarSelectoresInSitu();
     }
 
-    // Select Filtro Variedad en Censo (FASE 2)
+    // Select Filtro Variedad en Censo (5 Variedades Oficiales en Femenino ESGA025)
     const selectFiltroVariedad = document.getElementById('filtro-variedad');
     if (selectFiltroVariedad) {
-      const variedades = new Set(['Moteada / Exchequer']);
-      this.estado.animales.forEach(a => {
-        if (a.variedad) variedades.add(a.variedad.trim());
-      });
+      const variedadesOficialesFemenino = [
+        'Negra Moteada (Oficial)',
+        'Pinta o Exchequer (Oficial)',
+        'Blanca (Oficial)',
+        'Milflores (En proceso de reconocimiento)',
+        'Armiñada en negro (En proceso de reconocimiento)'
+      ];
       const valPrevio = selectFiltroVariedad.value || 'TODAS';
-      selectFiltroVariedad.innerHTML = '<option value="TODAS">Variedad: Todas</option>';
-      Array.from(variedades).sort().forEach(v => {
+      selectFiltroVariedad.innerHTML = '<option value="TODAS">Variedad: Todas (5 en Femenino)</option>';
+      variedadesOficialesFemenino.forEach(v => {
         const opt = document.createElement('option');
         opt.value = v;
         opt.textContent = v;
@@ -5382,6 +5461,429 @@ const app = {
     if (typeof this.renderizarModuloGermoplasma === 'function') {
       this.renderizarModuloGermoplasma();
     }
+  },
+
+  // =========================================================================
+  // BÚSQUEDA RÁPIDA EN CABECERA FIJA (CUALQUIER ANILLA AL INSTANTE)
+  // =========================================================================
+  busquedaRapidaCabecera(valor) {
+    const query = (valor || '').trim();
+    const inDesktop = document.getElementById('header-busqueda-rapida-anilla');
+    const inMobile = document.getElementById('header-busqueda-rapida-anilla-mobile');
+    if (inDesktop && inDesktop.value !== valor) inDesktop.value = valor;
+    if (inMobile && inMobile.value !== valor) inMobile.value = valor;
+
+    const btnClear = document.getElementById('btn-clear-header-search');
+    const dropdown = document.getElementById('header-busqueda-resultados');
+
+    if (btnClear) {
+      if (query.length > 0) btnClear.classList.remove('hidden');
+      else btnClear.classList.add('hidden');
+    }
+
+    // Sincronizar también con el buscador de Mi Censo
+    const inputCenso = document.getElementById('filtro-buscar');
+    if (inputCenso) {
+      inputCenso.value = query;
+      this.filtrarCensoEjemplares();
+    }
+
+    if (!dropdown) return;
+    if (!query) {
+      dropdown.classList.add('hidden');
+      dropdown.innerHTML = '';
+      return;
+    }
+
+    const qNorm = this.normalizarTexto(query);
+    const coincidencias = (this.estado.animales || []).filter(a => {
+      return this.normalizarTexto(a.numero_anilla).includes(qNorm) ||
+             this.normalizarTexto(a.codigo_identificacion).includes(qNorm) ||
+             this.normalizarTexto(a.nombre).includes(qNorm) ||
+             this.normalizarTexto(a.variedad).includes(qNorm);
+    }).slice(0, 8);
+
+    if (coincidencias.length === 0) {
+      dropdown.innerHTML = `
+        <div class="p-3 text-xs text-slate-400 text-center">
+          No se encontraron ejemplares con la anilla o código "<strong class="text-white font-mono">${this.escaparHtml(query)}</strong>".
+        </div>
+      `;
+      dropdown.classList.remove('hidden');
+      return;
+    }
+
+    dropdown.innerHTML = coincidencias.map(a => `
+      <button type="button" onclick="app.abrirFichaDesdeBusquedaCabecera('${a.id}')" class="w-full text-left px-3.5 py-2.5 hover:bg-slate-800/90 border-b border-slate-800/70 last:border-0 flex items-center justify-between gap-2 transition">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-sm">${a.sexo === 'Macho' ? '🐓' : '🐔'}</span>
+          <div class="truncate">
+            <span class="font-mono font-black text-amber-400 text-xs">#${this.escaparHtml(a.numero_anilla)}</span>
+            <span class="text-[11px] text-white font-bold ml-1">${this.escaparHtml(a.codigo_identificacion || '')}</span>
+            <span class="block text-[10px] text-slate-400 truncate">${this.escaparHtml(a.variedad || '')} · ${this.escaparHtml(a.familia_origen || '')}</span>
+          </div>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-emerald-950 text-emerald-300 border border-emerald-700/60 shrink-0">
+          ${this.escaparHtml(a.seccion_libro || 'RN')}
+        </span>
+      </button>
+    `).join('');
+    dropdown.classList.remove('hidden');
+  },
+
+  ejecutarBusquedaRapidaCabecera(valor) {
+    const query = (valor || '').trim();
+    const dropdown = document.getElementById('header-busqueda-resultados');
+    if (dropdown) dropdown.classList.add('hidden');
+    if (!query) return;
+
+    const qNorm = this.normalizarTexto(query);
+    const exacto = (this.estado.animales || []).find(a =>
+      this.normalizarTexto(a.numero_anilla) === qNorm ||
+      this.normalizarTexto(a.codigo_identificacion) === qNorm
+    );
+
+    if (exacto) {
+      this.abrirFichaDesdeBusquedaCabecera(exacto.id);
+    } else {
+      this.cambiarTab('censo');
+      const inputCenso = document.getElementById('filtro-buscar');
+      if (inputCenso) {
+        inputCenso.value = query;
+        this.filtrarCensoEjemplares();
+      }
+    }
+  },
+
+  abrirFichaDesdeBusquedaCabecera(animalId) {
+    const dropdown = document.getElementById('header-busqueda-resultados');
+    if (dropdown) dropdown.classList.add('hidden');
+    this.verFichaAnimal(animalId);
+  },
+
+  limpiarBusquedaRapidaCabecera() {
+    const inDesktop = document.getElementById('header-busqueda-rapida-anilla');
+    const inMobile = document.getElementById('header-busqueda-rapida-anilla-mobile');
+    if (inDesktop) inDesktop.value = '';
+    if (inMobile) inMobile.value = '';
+    const btnClear = document.getElementById('btn-clear-header-search');
+    if (btnClear) btnClear.classList.add('hidden');
+    const dropdown = document.getElementById('header-busqueda-resultados');
+    if (dropdown) dropdown.classList.add('hidden');
+    const inputCenso = document.getElementById('filtro-buscar');
+    if (inputCenso) {
+      inputCenso.value = '';
+      this.filtrarCensoEjemplares();
+    }
+  },
+
+  // =========================================================================
+  // ALTA RÁPIDA (SUBPESTAÑAS: ALTA INDIVIDUAL 15s Y ALTA DE POLLADA/CAMADA)
+  // =========================================================================
+  cambiarSubtabAlta(modo) {
+    const secInd = document.getElementById('subtab-alta-individual');
+    const secPol = document.getElementById('subtab-alta-pollada');
+    const btnInd = document.getElementById('btn-subtab-alta-individual');
+    const btnPol = document.getElementById('btn-subtab-alta-pollada');
+
+    if (modo === 'pollada') {
+      if (secInd) secInd.classList.add('hidden');
+      if (secPol) secPol.classList.remove('hidden');
+      if (btnPol) btnPol.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 bg-emerald-500 text-slate-950 shadow';
+      if (btnInd) btnInd.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-300 hover:text-white';
+      const polladaFecha = document.getElementById('pollada-fecha-nac');
+      if (polladaFecha && !polladaFecha.value) {
+        polladaFecha.valueAsDate = new Date();
+      }
+      const cont = document.getElementById('pollada-filas-container');
+      if (cont && cont.children.length === 0) {
+        this.generarFilasAnillasCorrelativasPollada();
+      }
+    } else {
+      if (secInd) secInd.classList.remove('hidden');
+      if (secPol) secPol.classList.add('hidden');
+      if (btnInd) btnInd.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 bg-amber-500 text-slate-950 shadow';
+      if (btnPol) btnPol.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-300 hover:text-white';
+    }
+  },
+
+  generarFilasAnillasCorrelativasPollada() {
+    const inicioStr = (document.getElementById('pollada-anilla-inicio')?.value || '0001').trim();
+    const cantidad = Math.min(50, Math.max(1, parseInt(document.getElementById('pollada-cantidad-hermanos')?.value, 10) || 5));
+    const sexoModo = document.getElementById('pollada-sexo-defecto')?.value || 'Hembra';
+    const listaManual = (document.getElementById('pollada-anillas-lista-manual')?.value || '').trim();
+    const cont = document.getElementById('pollada-filas-container');
+    if (!cont) return;
+
+    let anillas = [];
+    if (listaManual) {
+      anillas = listaManual.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean);
+    } else {
+      const matchNum = inicioStr.match(/^(.*?)(\d+)$/);
+      if (matchNum) {
+        const prefijo = matchNum[1];
+        const numBase = parseInt(matchNum[2], 10);
+        const padLen = matchNum[2].length;
+        for (let i = 0; i < cantidad; i++) {
+          anillas.push(prefijo + String(numBase + i).padStart(padLen, '0'));
+        }
+      } else {
+        for (let i = 1; i <= cantidad; i++) {
+          anillas.push(`${inicioStr}-${String(i).padStart(2, '0')}`);
+        }
+      }
+    }
+
+    cont.innerHTML = anillas.map((anilla, idx) => {
+      const sexoFila = sexoModo === 'Alterno' ? (idx % 2 === 0 ? 'Hembra' : 'Macho') : sexoModo;
+      return this.crearHtmlFilaHermanoPollada(idx + 1, anilla, sexoFila);
+    }).join('');
+  },
+
+  crearHtmlFilaHermanoPollada(indice, anilla = '', sexo = 'Hembra') {
+    return `
+      <div class="pollada-fila-item grid grid-cols-12 gap-2 items-center bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-2 text-xs">
+        <div class="col-span-2 sm:col-span-1 font-mono font-bold text-slate-400">#${indice}</div>
+        <div class="col-span-5 sm:col-span-5">
+          <input type="text" value="${this.escaparHtml(anilla)}" placeholder="Nº Anilla" class="pollada-input-anilla w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono font-bold focus:border-emerald-400 focus:outline-none">
+        </div>
+        <div class="col-span-4 sm:col-span-4">
+          <select class="pollada-input-sexo w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white focus:border-emerald-400 focus:outline-none">
+            <option value="Hembra" ${sexo === 'Hembra' ? 'selected' : ''}>🐔 Hembra (18 mm)</option>
+            <option value="Macho" ${sexo === 'Macho' ? 'selected' : ''}>🐓 Macho (20 mm)</option>
+          </select>
+        </div>
+        <div class="col-span-1 sm:col-span-2 text-right">
+          <button type="button" onclick="this.closest('.pollada-fila-item').remove()" class="px-2 py-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/50 text-[11px]" title="Quitar hermano">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  agregarFilaHermanoPollada() {
+    const cont = document.getElementById('pollada-filas-container');
+    if (!cont) return;
+    const totalActual = cont.querySelectorAll('.pollada-fila-item').length;
+    const inputs = cont.querySelectorAll('.pollada-input-anilla');
+    let siguienteAnilla = String(totalActual + 1).padStart(4, '0');
+    if (inputs.length > 0) {
+      const ultima = inputs[inputs.length - 1].value.trim();
+      const m = ultima.match(/^(.*?)(\d+)$/);
+      if (m) {
+        siguienteAnilla = m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0');
+      }
+    }
+    cont.insertAdjacentHTML('beforeend', this.crearHtmlFilaHermanoPollada(totalActual + 1, siguienteAnilla, 'Hembra'));
+  },
+
+  async guardarAltaPolladaCamada(event) {
+    event.preventDefault();
+
+    const u = this.estado.usuarioActivo;
+    if (!u || this.estado.modoVisitante) {
+      alert('Debes iniciar sesión con una cuenta de usuario activa para registrar una pollada.');
+      return;
+    }
+
+    const aviario = this.estado.aviario || this.estado.aviarioActivo;
+    if (!aviario) {
+      if (confirm('No tienes ningún aviario o explotación activa configurada en tu cuenta.\n¿Deseas configurar tu aviario ahora?')) {
+        this.abrirModalAviario(true);
+      }
+      return;
+    }
+
+    const padreId = document.getElementById('pollada-padre')?.value || null;
+    const madreId = document.getElementById('pollada-madre')?.value || null;
+    const fechaNac = document.getElementById('pollada-fecha-nac')?.value || new Date().toISOString().split('T')[0];
+    const variedad = document.getElementById('pollada-variedad')?.value || 'Negra Moteada (Oficial)';
+    const familia = document.getElementById('pollada-familia')?.value || 'Familia A';
+
+    const filas = Array.from(document.querySelectorAll('#pollada-filas-container .pollada-fila-item'));
+    if (filas.length === 0) {
+      alert('Por favor, genera al menos una fila de anilla para la pollada.');
+      return;
+    }
+
+    const hermanosRegistrar = [];
+    const anillasEnLote = new Set();
+
+    for (const fila of filas) {
+      const anilla = (fila.querySelector('.pollada-input-anilla')?.value || '').trim();
+      const sexo = fila.querySelector('.pollada-input-sexo')?.value || 'Hembra';
+      if (!anilla) continue;
+
+      if (anillasEnLote.has(anilla)) {
+        alert(`Error: La anilla ${anilla} está repetida dentro de la misma pollada.`);
+        return;
+      }
+      if (this.estado.animales.some(a => a.numero_anilla === anilla)) {
+        alert(`Error: Ya existe en el censo un ejemplar con la anilla ${anilla}.`);
+        return;
+      }
+      anillasEnLote.add(anilla);
+      hermanosRegistrar.push({ anilla, sexo });
+    }
+
+    if (hermanosRegistrar.length === 0) {
+      alert('Introduce al menos un número de anilla válido.');
+      return;
+    }
+
+    const fx = (padreId && madreId)
+      ? this.zootecnia.calcularFxDescendencia(padreId, madreId, this.estado.animales)
+      : 0.0;
+
+    const anioCorto = fechaNac.slice(2, 4) || '26';
+    const explotacionId = aviario.id;
+    const codigoRega = aviario.codigo_rega || aviario.rega || u.rega || 'TEMP-REGA-001';
+    const titularNombre = aviario.nombre_titular || u.nombre || '';
+    const gpsFinal = (aviario.latitud !== null && aviario.latitud !== undefined && aviario.longitud !== null && aviario.longitud !== undefined)
+      ? { latitud: Number(aviario.latitud), longitud: Number(aviario.longitud), precision_m: aviario.geolocalizacion_precision || 10, origen: 'aviario_heredado' }
+      : null;
+
+    const nuevosEjemplares = [];
+    const baseTs = Date.now();
+
+    for (let i = 0; i < hermanosRegistrar.length; i++) {
+      const h = hermanosRegistrar[i];
+      const letraSexo = h.sexo === 'Macho' ? 'M' : 'H';
+      const calibre = h.sexo === 'Macho' ? 20.0 : 18.0;
+      const codigoId = `ESGA025-${anioCorto}-${letraSexo}-${h.anilla}`;
+
+      const nuevoAnimal = {
+        id: `alac-${baseTs}-${i}`,
+        usuario_id: u.id,
+        codigo_identificacion: codigoId,
+        numero_anilla: h.anilla,
+        calibre_anilla_mm: calibre,
+        nombre: `Pollada ESGA025 #${h.anilla}`,
+        sexo: h.sexo,
+        fecha_nacimiento: fechaNac,
+        variedad: variedad,
+        seccion_libro: 'RN',
+        id_padre: padreId,
+        id_madre: madreId,
+        explotacion_id: explotacionId,
+        codigo_rega: codigoRega,
+        titular_nombre: titularNombre,
+        familia_origen: familia,
+        peso_actual_kg: 0.08,
+        rfid_chip_id: null,
+        estado: 'Activo',
+        coeficiente_consanguinidad: fx,
+        feno_zoometria: {
+          angulo_cola_grados: 70,
+          perfil_pecho: 'Recto/Plano',
+          color_tarsos: 'Blanco rosáceo',
+          color_orejillas: 'Blanco'
+        },
+        fotos: { lateral: null, cabeza: null, tarsos: null, galeria_opcional: [] },
+        multimedia_urls: { lateral: null, cabeza: null, tarsos: null, galeria_opcional: [] },
+        geolocalizacion_alta: gpsFinal,
+        notas: `Alta por lote de Pollada/Camada (${hermanosRegistrar.length} hermanos).`,
+        created_at: new Date().toISOString()
+      };
+
+      await this.db.put('animales', nuevoAnimal);
+      this.estado.animales.unshift(nuevoAnimal);
+      nuevosEjemplares.push(nuevoAnimal);
+    }
+
+    if (navigator.onLine && this.supabaseClient) {
+      try {
+        await this.supabaseClient.from('animales').insert(nuevosEjemplares);
+      } catch (err) {
+        for (const ej of nuevosEjemplares) {
+          await this.db.put('syncQueue', { tipo: 'ALTA_ANIMAL', payload: ej, creado_en: Date.now() });
+        }
+      }
+    } else {
+      for (const ej of nuevosEjemplares) {
+        await this.db.put('syncQueue', { tipo: 'ALTA_ANIMAL', payload: ej, creado_en: Date.now() });
+      }
+    }
+
+    this.estado.syncQueue = await this.db.getAll('syncQueue');
+    this.actualizarContadorSyncQueue();
+    this.poblarSelectores();
+    this.renderizarCenso();
+    this.actualizarKPIs();
+
+    alert(`🐣 ¡Pollada/Camada registrada con éxito!\n• Se han dado de alta ${nuevosEjemplares.length} hermanos en el Registro de Nacimientos (RN).\n• Variedad: ${variedad}\n• Rango de anillas: #${hermanosRegistrar[0].anilla} a #${hermanosRegistrar[hermanosRegistrar.length - 1].anilla}`);
+    this.cambiarTab('censo');
+  },
+
+  // =========================================================================
+  // 3 FOTOS OFICIALES CNZ DE ADULTO EN MÓDULO DE INSPECCIÓN ZOOTÉCNICA (100p)
+  // =========================================================================
+  actualizarVistaFotosAdultoInspeccion(animal) {
+    const tipos = ['lateral', 'cabeza', 'tarsos'];
+    let subidasCount = 0;
+
+    tipos.forEach(tipo => {
+      const url = animal ? (animal.fotos?.[tipo] || animal.multimedia_urls?.[tipo] || null) : null;
+      const imgEl = document.getElementById(`insitu-preview-foto-${tipo}`);
+      const emptyEl = document.getElementById(`insitu-empty-foto-${tipo}`);
+      if (url) {
+        subidasCount++;
+        if (imgEl) {
+          imgEl.src = url;
+          imgEl.classList.remove('hidden');
+        }
+        if (emptyEl) emptyEl.classList.add('hidden');
+      } else {
+        if (imgEl) {
+          imgEl.src = '';
+          imgEl.classList.add('hidden');
+        }
+        if (emptyEl) emptyEl.classList.remove('hidden');
+      }
+    });
+
+    const badge = document.getElementById('insitu-fotos-cnz-status-badge');
+    if (badge) {
+      if (subidasCount === 3) {
+        badge.textContent = '✓ 3 / 3 Fotos Adulto CNZ Completas';
+        badge.className = 'px-2.5 py-1 rounded-full text-[11px] font-mono font-black bg-emerald-950 text-emerald-300 border border-emerald-500/60';
+      } else {
+        badge.textContent = `${subidasCount} / 3 Fotos Subidas (Obligatorias)`;
+        badge.className = 'px-2.5 py-1 rounded-full text-[11px] font-mono font-black bg-rose-950 text-rose-300 border border-rose-700/60';
+      }
+    }
+  },
+
+  subirFotoAdultoInspeccion(tipoToma, inputElement) {
+    const file = inputElement?.files?.[0];
+    if (!file) return;
+
+    const animalId = this.estado.inspeccionInSitu.animalActualId || document.getElementById('insitu-animal-select')?.value;
+    if (!animalId) {
+      alert('Selecciona primero el ejemplar a inspeccionar en el selector superior.');
+      inputElement.value = '';
+      return;
+    }
+
+    const animal = (this.estado.animales || []).find(a => a.id === animalId);
+    if (!animal) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target.result;
+      if (!animal.fotos) animal.fotos = { lateral: null, cabeza: null, tarsos: null, galeria_opcional: [] };
+      if (!animal.multimedia_urls) animal.multimedia_urls = { lateral: null, cabeza: null, tarsos: null, galeria_opcional: [] };
+
+      animal.fotos[tipoToma] = dataUrl;
+      animal.multimedia_urls[tipoToma] = dataUrl;
+
+      await this.db.put('animales', animal);
+      this.actualizarVistaFotosAdultoInspeccion(animal);
+      this.renderizarCenso();
+      this.mostrarNotificacionToast(`📸 Foto oficial de adulto (${tipoToma.toUpperCase()}) vinculada al ejemplar #${animal.numero_anilla}.`, 'success');
+    };
+    reader.readAsDataURL(file);
   },
 
   // Modales de Configuración y SyncQueue
@@ -6963,6 +7465,10 @@ const app = {
       setSlider('insitu-rng-peso', 8.5);
     }
 
+    if (typeof this.actualizarVistaFotosAdultoInspeccion === 'function') {
+      this.actualizarVistaFotosAdultoInspeccion(animal);
+    }
+
     this.recalcularInSitu();
   },
 
@@ -7375,6 +7881,20 @@ const app = {
     const animal = (this.estado.animales || []).find(a => a.id === animalId);
     if (!animal) {
       alert('Ejemplar no encontrado en el censo local.');
+      return;
+    }
+
+    // EXIGENCIA OBLIGATORIA CNZ: Las 3 fotografías oficiales de adulto (Perfil, Cabeza y Tarsos)
+    const fotoLateral = animal.fotos?.lateral || animal.multimedia_urls?.lateral;
+    const fotoCabeza = animal.fotos?.cabeza || animal.multimedia_urls?.cabeza;
+    const fotoTarsos = animal.fotos?.tarsos || animal.multimedia_urls?.tarsos;
+    if (!fotoLateral || !fotoCabeza || !fotoTarsos) {
+      const faltantes = [];
+      if (!fotoLateral) faltantes.push('1. Perfil Lateral Adulto');
+      if (!fotoCabeza) faltantes.push('2. Cabeza, Cresta y Orejilla');
+      if (!fotoTarsos) faltantes.push('3. Tarsos y Anilla Cerrada');
+      alert(`📸 REQUISITO OBLIGATORIO CNZ (3 FOTOS DE ADULTO):\n\nPara emitir el Acta Oficial de Inspección Zootécnica y promover el ejemplar en el Libro Genealógico, es obligatorio subir las 3 fotografías oficiales de adulto en este módulo.\n\nFaltan por subir:\n• ${faltantes.join('\n• ')}`);
+      document.getElementById('insitu-fotos-cnz-status-badge')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
