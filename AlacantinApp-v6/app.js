@@ -5246,13 +5246,22 @@ const app = {
       'admin': '🛡️ Roles RBAC, Auditoría & Copias de Seguridad'
     };
 
+    const level2Bar = document.getElementById('header-level2-bar');
     if (btnVolverHerramientas) {
       if (modulosNivel2.includes(tabName)) {
         btnVolverHerramientas.classList.remove('hidden');
         btnVolverHerramientas.classList.add('inline-flex');
+        if (level2Bar) {
+          level2Bar.classList.remove('hidden');
+          level2Bar.classList.add('flex');
+        }
       } else {
         btnVolverHerramientas.classList.add('hidden');
         btnVolverHerramientas.classList.remove('inline-flex');
+        if (level2Bar) {
+          level2Bar.classList.add('hidden');
+          level2Bar.classList.remove('flex');
+        }
       }
     }
     if (pillSeccion) {

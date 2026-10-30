@@ -46,7 +46,10 @@
   <!-- Estilos Personalizados Complementarios -->
   <link rel="stylesheet" href="./styles.css?v=6.2.0">
   <style>
-    html, body, #app, #main-container {
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html, body, #app, #main-container, main {
       max-width: 100vw !important;
       overflow-x: hidden !important;
     }
@@ -60,25 +63,48 @@
       touch-action: manipulation;
     }
     @media (max-width: 640px) {
+      #badge-esga025,
+      .esga-badge-static {
+        display: none !important;
+      }
       #header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        flex-wrap: wrap;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        padding: 8px 12px !important;
+      }
+      #header-top-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        padding: 0 !important;
+      }
+      #header-bottom-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 8px !important;
+        padding: 0 !important;
+      }
+      #header-busqueda-mobile-wrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+      }
+      #header-busqueda-rapida-anilla-mobile {
+        width: 100% !important;
+        min-width: 0 !important;
       }
       #header-usuario,
       #user-nombre-display {
-        max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      #header-busqueda-rapida-anilla-mobile {
-        flex: 1;
-        max-width: 130px;
+        max-width: 105px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
       }
     }
   </style>
@@ -86,7 +112,7 @@
 <body id="app" class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-200">
 
   <!-- ========================================================================= -->
-  <!-- BARRA DE ESTADO Y CABECERA OFICIAL COMPACTA (ALACANTINAPP V6)             -->
+  <!-- BARRA DE ESTADO Y CABECERA OFICIAL EN 2 FILAS MÓVILES (ALACANTINAPP V6)   -->
   <!-- ========================================================================= -->
   <header id="header" class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40 w-full max-w-full box-border">
     <!-- Banner de aviso offline si no hay red -->
@@ -95,14 +121,15 @@
       <span class="truncate">MODO OFFLINE ACTIVO: Guardado local en IndexedDB (SyncQueue).</span>
     </div>
 
-    <div id="header-top-row" class="w-full max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-2 box-border">
-      <!-- Logo y Título Oficial Compacto -->
-      <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 min-w-0">
-        <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-8 w-8 sm:h-11 sm:w-11 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md shrink-0">
+    <!-- FILA 1 (Superior - #header-top-row): En móvil muestra únicamente Logo y Título "AlacantinApp v6" -->
+    <div id="header-top-row" class="w-full max-w-7xl mx-auto sm:px-6 lg:px-8 sm:py-2.5 flex items-center justify-between gap-2 box-border">
+      <!-- Logo y Título Oficial -->
+      <div class="flex items-center gap-2.5 shrink-0 min-w-0">
+        <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md shrink-0">
         <div class="min-w-0">
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-xs sm:text-lg font-bold text-white tracking-tight whitespace-nowrap">Alacantin<span class="hidden xs:inline">App</span> <span class="text-amber-400 font-extrabold">v6</span></h1>
-            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-lg font-bold text-white tracking-tight whitespace-nowrap">AlacantinApp <span class="text-amber-400 font-extrabold">v6</span></h1>
+            <span id="badge-esga025" class="esga-badge-static hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
               ESGA025
             </span>
           </div>
@@ -112,20 +139,8 @@
         </div>
       </div>
 
-      <!-- BUSCADOR RÁPIDO MÓVIL COMPACTO (max-width: 130px en móvil) -->
-      <div id="header-busqueda-mobile-wrapper" class="md:hidden relative flex-1 max-w-[130px] min-w-0 mx-1">
-        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400 text-[10px] pointer-events-none"></i>
-        <input type="search"
-               id="header-busqueda-rapida-anilla-mobile"
-               oninput="app.busquedaRapidaCabecera(this.value)"
-               onkeydown="if(event.key==='Enter'){ event.preventDefault(); app.ejecutarBusquedaRapidaCabecera(this.value); }"
-               placeholder="🔍 Anilla..."
-               style="flex: 1; max-width: 130px;"
-               class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-full pl-6 pr-2 py-1 text-[11px] text-white placeholder-slate-400 font-mono focus:outline-none">
-      </div>
-
-      <!-- BARRA DE BÚSQUEDA RÁPIDA EN CABECERA FIJA (ESCRITORIO / TABLET) -->
-      <div class="hidden md:block flex-1 max-w-md mx-3 relative">
+      <!-- BARRA DE BÚSQUEDA RÁPIDA EN CABECERA FIJA (SOLO ESCRITORIO / TABLET >= 641px) -->
+      <div class="hidden sm:block flex-1 max-w-md mx-3 relative">
         <div class="relative flex items-center">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-amber-400 text-xs pointer-events-none"></i>
           <input type="search"
@@ -141,16 +156,13 @@
             <i class="fa-solid fa-circle-xmark"></i>
           </button>
         </div>
-        <!-- Desplegable instantáneo de coincidencias por anilla -->
-        <div id="header-busqueda-resultados" class="hidden absolute left-0 right-0 mt-1.5 bg-slate-900 border border-amber-500/50 rounded-xl shadow-2xl overflow-hidden z-50 max-h-72 overflow-y-auto divide-y divide-slate-800 text-xs">
-        </div>
       </div>
 
-      <!-- Indicadores de Conexión, Aviario Activo, Sincronización, Configuración y Pastilla de Usuario Compacta -->
-      <div class="flex items-center space-x-1 sm:space-x-2 shrink-0 min-w-0">
+      <!-- Indicadores de Escritorio (Ocultos en móvil para que la Fila 1 tenga solo Logo + Título) -->
+      <div class="hidden sm:flex items-center space-x-2 shrink-0">
         <!-- Badge de Aviario Activo (Solo Escritorio) -->
-        <button id="badge-aviario-activo" onclick="app.abrirModalAviario()" title="Aviario Activo (Pulsar para configurar o editar datos)" class="hidden lg:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-400 text-left transition shadow-sm max-w-[170px] sm:max-w-xs group">
-          <div class="h-7 w-7 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
+        <button id="badge-aviario-activo" onclick="app.abrirModalAviario()" title="Aviario Activo (Pulsar para configurar o editar datos)" class="hidden lg:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-400 text-left transition shadow-sm max-w-[180px] group">
+          <div class="h-7 w-7 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs flex-shrink-0">
             <i class="fa-solid fa-location-dot"></i>
           </div>
           <div class="min-w-0">
@@ -162,68 +174,97 @@
               Sin REGA · Modo Lectura
             </div>
           </div>
-          <i class="fa-solid fa-pen text-[10px] text-slate-400 ml-auto hidden sm:inline group-hover:text-amber-400 transition-colors"></i>
         </button>
 
-        <!-- Indicador Online / Offline (Solo Tablet/Escritorio) -->
+        <!-- Indicador Online / Offline -->
         <div id="net-status-badge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
           <span class="h-2 w-2 rounded-full bg-emerald-400 pulse-online"></span>
           <span id="net-status-text" class="hidden xl:inline">Online (Supabase)</span>
         </div>
 
-        <!-- Botón Configuración de Supabase (Solo Tablet/Escritorio) -->
-        <button onclick="app.abrirModalConfig()" title="Configuración de Supabase y Base de Datos" class="hidden sm:flex px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs items-center gap-1 transition">
+        <!-- Botón Configuración de Supabase -->
+        <button onclick="app.abrirModalConfig()" title="Configuración de Supabase y Base de Datos" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1 transition">
           <i class="fa-solid fa-sliders text-amber-400"></i>
           <span class="hidden lg:inline">Config</span>
         </button>
 
-        <!-- Badge Monitor Visual de Sincronización Offline (SyncQueue) (Solo Tablet/Escritorio) -->
-        <button id="btn-sync-queue" onclick="app.abrirModalSyncQueue()" title="Monitor de Cola Offline (SyncQueue) y Compresor WebP" class="hidden sm:flex relative px-2.5 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/70 text-xs font-bold items-center gap-1.5 transition shadow-sm">
+        <!-- Badge Monitor Visual de Sincronización Offline (SyncQueue) -->
+        <button id="btn-sync-queue" onclick="app.abrirModalSyncQueue()" title="Monitor de Cola Offline (SyncQueue) y Compresor WebP" class="relative px-2.5 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/70 text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
           <span id="sync-monitor-label" class="whitespace-nowrap">☁️ Sincronizado</span>
           <span id="sync-pending-count" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black text-[10px]">0</span>
         </button>
 
-        <!-- ================================================================= -->
-        <!-- PASTILLA / AVATAR DE USUARIO COMPACTA Y BOTÓN DE CERRAR SESIÓN    -->
-        <!-- ================================================================= -->
-        <div class="relative flex items-center gap-1" id="user-account-menu-container">
-          <button type="button"
-                  id="user-avatar-pill"
-                  onclick="app.toggleMenuMiCuenta(event)"
-                  title="Mi Cuenta · Ver perfil, actualizar REGA, cambiar contraseña o cerrar sesión"
-                  class="flex items-center gap-1.5 pl-1 pr-2 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[155px] sm:max-w-[260px]">
-            <!-- Avatar con iniciales reales del usuario autenticado -->
-            <span id="user-avatar-iniciales" class="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-[10px] sm:text-xs flex items-center justify-center shadow-inner shrink-0">
-              👤
+        <!-- Guía 12 Regiones (Escritorio) -->
+        <button onclick="app.abrirModalGuiaCampo()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition whitespace-nowrap" title="Consultar Guía Interactiva de Campo (12 Regiones Corporales ESGA025)">
+          <i class="fa-solid fa-book-open-reader text-amber-400"></i>
+          <span>Guía 12 Regiones</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FILA 2 (Inferior - #header-bottom-row): En móvil muestra Buscador flexible + Avatar/Nombre truncado + Botón Cerrar Sesión -->
+    <div id="header-bottom-row" class="w-full max-w-7xl mx-auto sm:px-6 lg:px-8 sm:py-1.5 sm:border-t sm:border-slate-800/80 sm:bg-slate-900/75 flex items-center justify-between gap-2 box-border relative">
+      <!-- 1. Buscador de anilla (#header-busqueda-rapida-anilla-mobile) flexible en móvil -->
+      <div id="header-busqueda-mobile-wrapper" class="sm:hidden relative flex-1 min-w-0">
+        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400 text-[11px] pointer-events-none"></i>
+        <input type="search"
+               id="header-busqueda-rapida-anilla-mobile"
+               oninput="app.busquedaRapidaCabecera(this.value)"
+               onkeydown="if(event.key==='Enter'){ event.preventDefault(); app.ejecutarBusquedaRapidaCabecera(this.value); }"
+               placeholder="Buscar anilla..."
+               class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-full pl-7 pr-3 py-1.5 text-xs text-white placeholder-slate-400 font-mono focus:outline-none">
+      </div>
+
+      <!-- Indicador de sección activa en Escritorio (oculto en móvil para mantener limpia la Fila 2) -->
+      <div class="hidden sm:flex items-center gap-2 min-w-0">
+        <span id="header-active-section-pill" class="text-xs font-bold text-amber-400 truncate">
+          🐓 Mi Censo Oficial ESGA025
+        </span>
+        <button onclick="app.cambiarTab('admin')" id="tab-btn-admin" class="hidden tab-nav-btn items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-extrabold transition text-sky-300 bg-sky-950/80 hover:bg-sky-900 border border-sky-500/60 shadow-sm">
+          <i class="fa-solid fa-users-gear text-sky-400"></i>
+          <span>🛡️ Admin RBAC</span>
+        </button>
+      </div>
+
+      <!-- 2. Avatar/Nombre del usuario truncado + 3. Botón de cerrar sesión -->
+      <div class="relative flex items-center gap-1.5 shrink-0" id="user-account-menu-container">
+        <button type="button"
+                id="user-avatar-pill"
+                onclick="app.toggleMenuMiCuenta(event)"
+                title="Mi Cuenta · Ver perfil, actualizar REGA, cambiar contraseña o cerrar sesión"
+                class="flex items-center gap-1.5 pl-1 pr-2.5 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[150px] sm:max-w-[260px]">
+          <!-- Avatar con iniciales reales del usuario autenticado -->
+          <span id="user-avatar-iniciales" class="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-[10px] sm:text-xs flex items-center justify-center shadow-inner shrink-0">
+            👤
+          </span>
+          <!-- Texto de Nombre (Truncado en móvil) -->
+          <div id="header-usuario" class="text-left min-w-0 max-w-[105px] sm:max-w-[200px] overflow-hidden">
+            <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate" style="max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              Visitante
             </span>
-            <!-- Texto de Nombre (Truncado a 110px en móvil) y textos secundarios ocultos en móvil -->
-            <div id="header-usuario" class="text-left min-w-0 max-w-[110px] sm:max-w-[200px] overflow-hidden">
-              <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate" style="max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                Visitante
+            <div class="hidden sm:flex items-center gap-1.5 leading-none mt-0.5 header-secondary-text-mobile">
+              <span id="user-rol-display" class="text-[9px] font-mono text-slate-400 truncate">
+                Sin Sesión / Visitante
               </span>
-              <div class="hidden sm:flex items-center gap-1.5 leading-none mt-0.5 header-secondary-text-mobile">
-                <span id="user-rol-display" class="text-[9px] font-mono text-slate-400 truncate">
-                  Sin Sesión / Visitante
-                </span>
-                <span id="user-rega-display" class="hidden text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-700/60">
-                  TEMP-REGA-001
-                </span>
-              </div>
+              <span id="user-rega-display" class="hidden text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-700/60">
+                TEMP-REGA-001
+              </span>
             </div>
-            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 group-hover:text-amber-400 transition shrink-0"></i>
-          </button>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 group-hover:text-amber-400 transition shrink-0"></i>
+        </button>
 
-          <!-- Botón limpio directo de Cerrar Sesión / Acceso en cabecera móvil -->
-          <button type="button"
-                  id="btn-header-logout-mobile"
-                  onclick="app.cerrarSesion()"
-                  title="Cerrar sesión / Cambiar cuenta"
-                  class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-950/70 hover:bg-rose-900 border border-rose-800/70 text-rose-300 hover:text-white text-xs flex items-center justify-center transition shrink-0">
-            <i class="fa-solid fa-right-from-bracket text-xs"></i>
-          </button>
+        <!-- Botón directo de Cerrar Sesión -->
+        <button type="button"
+                id="btn-header-logout-mobile"
+                onclick="app.cerrarSesion()"
+                title="Cerrar sesión / Cambiar cuenta"
+                class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-800/70 text-rose-300 hover:text-white text-xs flex items-center justify-center transition shrink-0">
+          <i class="fa-solid fa-right-from-bracket text-xs"></i>
+        </button>
 
-          <!-- Menú Desplegable "Mi Cuenta" -->
-          <div id="dropdown-mi-cuenta" class="hidden absolute right-0 mt-2 w-80 rounded-2xl bg-slate-900/98 border border-slate-700 shadow-2xl p-4 z-50 space-y-3 backdrop-blur-xl">
+        <!-- Menú Desplegable "Mi Cuenta" -->
+        <div id="dropdown-mi-cuenta" class="hidden absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[92vw] rounded-2xl bg-slate-900/98 border border-slate-700 shadow-2xl p-4 z-50 space-y-3 backdrop-blur-xl">
             <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
               <div id="dropdown-user-initials" class="h-11 w-11 rounded-full bg-slate-800 border border-slate-600 text-slate-200 font-black text-sm flex items-center justify-center shrink-0">
                 👤
@@ -302,35 +343,21 @@
           </div>
         </div>
       </div>
+
+      <!-- Desplegable instantáneo de coincidencias por anilla (Móvil + Escritorio) -->
+      <div id="header-busqueda-resultados" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-amber-500/50 rounded-xl shadow-2xl overflow-hidden z-50 max-h-72 overflow-y-auto divide-y divide-slate-800 text-xs">
+      </div>
     </div>
 
-    <!-- Subcabecera Compacta: Indicador de Nivel 2 y Guía 12 Regiones -->
-    <div class="w-full max-w-7xl mx-auto px-2.5 sm:px-6 py-1.5 border-t border-slate-800/80 bg-slate-900/75 flex items-center justify-between gap-2 box-border">
-      <div class="flex items-center gap-1.5 min-w-0">
-        <button type="button"
-                id="btn-volver-herramientas"
-                onclick="app.cambiarTab('herramientas')"
-                class="hidden px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] sm:text-xs font-black flex items-center gap-1 shadow transition shrink-0">
-          <i class="fa-solid fa-arrow-left"></i>
-          <span>⚙️ Herramientas</span>
-        </button>
-        <span id="header-active-section-pill" class="text-[11px] sm:text-xs font-bold text-slate-300 truncate flex items-center gap-1.5 min-w-0">
-          <span class="text-amber-400 truncate">🐓 Mi Censo Oficial ESGA025</span>
-        </span>
-      </div>
-
-      <div class="flex items-center gap-1.5 shrink-0">
-        <!-- Pestaña Exclusiva Admin (V6) si el usuario es Administrador -->
-        <button onclick="app.cambiarTab('admin')" id="tab-btn-admin" class="hidden tab-nav-btn items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-extrabold transition text-sky-300 bg-sky-950/80 hover:bg-sky-900 border border-sky-500/60 shadow-sm">
-          <i class="fa-solid fa-users-gear text-sky-400"></i>
-          <span class="hidden sm:inline">🛡️ Admin RBAC</span>
-        </button>
-        <!-- Botón directo a la Guía Interactiva de Campo (12 Regiones ESGA025) -->
-        <button onclick="app.abrirModalGuiaCampo()" class="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-[11px] sm:text-xs font-bold flex items-center gap-1 transition whitespace-nowrap" title="Consultar Guía Interactiva de Campo (12 Regiones Corporales ESGA025)">
-          <i class="fa-solid fa-book-open-reader text-amber-400"></i>
-          <span>Guía 12 Regiones</span>
-        </button>
-      </div>
+    <!-- Barra contextual solo visible dentro de sub-módulos de Nivel 2 (Oculta en las 4 vistas principales) -->
+    <div id="header-level2-bar" class="hidden w-full max-w-7xl mx-auto px-2.5 sm:px-6 py-1 border-t border-slate-800/80 bg-slate-900/75 items-center justify-between gap-2 box-border">
+      <button type="button"
+              id="btn-volver-herramientas"
+              onclick="app.cambiarTab('herramientas')"
+              class="hidden px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-black items-center gap-1 shadow transition shrink-0">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>⚙️ Volver a Herramientas</span>
+      </button>
     </div>
   </header>
 

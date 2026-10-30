@@ -300,23 +300,55 @@ main {
 }
 
 @media (max-width: 640px) {
-  #header,
-  #header-top-row {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+  #badge-esga025,
+  .esga-badge-static {
+    display: none !important;
   }
 
   #header {
+    display: flex !important;
     flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding: 8px 12px !important;
+  }
+
+  #header-top-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+  }
+
+  #header-bottom-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+  }
+
+  #header-busqueda-mobile-wrapper {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  #header-busqueda-rapida-anilla-mobile {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   #header-usuario,
   #user-nombre-display {
-    max-width: 110px !important;
+    max-width: 105px !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -327,13 +359,6 @@ main {
   #user-rega-display,
   .header-secondary-text-mobile {
     display: none !important;
-  }
-
-  #header-busqueda-rapida-anilla-mobile,
-  #header-busqueda-mobile-wrapper {
-    flex: 1 1 auto !important;
-    max-width: 130px !important;
-    min-width: 0 !important;
   }
 }
 
