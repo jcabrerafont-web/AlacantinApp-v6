@@ -273,13 +273,9 @@ const app = {
       }
     });
 
-    // Inicializar fecha y generador de Pollada/Camada
-    const polladaFecha = document.getElementById('pollada-fecha-nac');
-    if (polladaFecha && !polladaFecha.value) {
-      polladaFecha.valueAsDate = new Date();
-    }
-    if (typeof this.generarFilasAnillasCorrelativasPollada === 'function') {
-      this.generarFilasAnillasCorrelativasPollada();
+    // Inicializar formulario de Pollada/Camada en estado limpio
+    if (typeof this.cargarFormularioPollada === 'function') {
+      this.cargarFormularioPollada();
     }
 
     // Comprobar si hay hash en la URL para cambiar de pestaña directamente (por defecto: Mi Censo)
@@ -5343,17 +5339,22 @@ const app = {
     const selectInsp = document.getElementById('inspeccion-animal-select');
     const selectPedigri = document.getElementById('pedigri-animal-select');
 
-    if (selectPadre) selectPadre.innerHTML = '<option value="">-- Sin padre registrado / Desconocido --</option>';
-    if (selectMadre) selectMadre.innerHTML = '<option value="">-- Sin madre registrada / Desconocida --</option>';
-    if (selectPolladaPadre) selectPolladaPadre.innerHTML = '<option value="">-- Sin padre registrado / Desconocido --</option>';
-    if (selectPolladaMadre) selectPolladaMadre.innerHTML = '<option value="">-- Sin madre registrada / Desconocida --</option>';
+    if (selectPadre) selectPadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
+    if (selectMadre) selectMadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
+    if (selectPolladaPadre) selectPolladaPadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
+    if (selectPolladaMadre) selectPolladaMadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
     if (selectSimMacho) selectSimMacho.innerHTML = '<option value="">-- Seleccionar Gallo --</option>';
     if (selectSimHembra) selectSimHembra.innerHTML = '<option value="">-- Seleccionar Gallina --</option>';
     if (selectInsp) selectInsp.innerHTML = '<option value="">-- Seleccionar Ejemplar para Calificar --</option>';
     if (selectPedigri) selectPedigri.innerHTML = '<option value="">-- Seleccionar Ejemplar para Ver Pedigrí --</option>';
 
-    this.estado.animales.forEach(a => {
-      const label = `#${a.numero_anilla} (${a.nombre || a.codigo_identificacion}) - ${a.seccion_libro} - ${a.familia_origen}`;
+    const uActivo = this.estado.usuarioActivo;
+    const animalesUsuario = (uActivo && !this.estado.modoVisitante)
+      ? this.estado.animales.filter(a => (a.estado || 'Activo') === 'Activo' && this.perteneceAUsuarioActivo(a, uActivo))
+      : [];
+
+    animalesUsuario.forEach(a => {
+      const label = `#${a.numero_anilla} (${a.nombre || a.codigo_identificacion}) - ${a.seccion_libro || 'RN'}`;
 
       if (a.sexo === 'Macho') {
         if (selectPadre) {
@@ -5374,7 +5375,7 @@ const app = {
           opt.textContent = label;
           selectSimMacho.appendChild(opt);
         }
-      } else {
+      } else if (a.sexo === 'Hembra') {
         if (selectMadre) {
           const opt = document.createElement('option');
           opt.value = a.id;
@@ -5394,6 +5395,10 @@ const app = {
           selectSimHembra.appendChild(opt);
         }
       }
+    });
+
+    this.estado.animales.forEach(a => {
+      const label = `#${a.numero_anilla} (${a.nombre || a.codigo_identificacion}) - ${a.seccion_libro} - ${a.familia_origen}`;
 
       if (selectInsp) {
         const opt = document.createElement('option');
@@ -5595,6 +5600,72 @@ const app = {
   // =========================================================================
   // ALTA RÁPIDA (SUBPESTAÑAS: ALTA INDIVIDUAL 15s Y ALTA DE POLLADA/CAMADA)
   // =========================================================================
+  cargarFormularioPollada() {
+    const selectPolladaPadre = document.getElementById('pollada-padre');
+    const selectPolladaMadre = document.getElementById('pollada-madre');
+
+    if (selectPolladaPadre) {
+      selectPolladaPadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
+    }
+    if (selectPolladaMadre) {
+      selectPolladaMadre.innerHTML = '<option value="">-- Seleccionar reproductor --</option>';
+    }
+
+    const u = this.estado.usuarioActivo || window.usuarioActual || null;
+    const censoActivoUsuario = (u && !this.estado.modoVisitante)
+      ? (this.estado.animales || []).filter(a => (a.estado || 'Activo') === 'Activo' && this.perteneceAUsuarioActivo(a, u))
+      : [];
+
+    censoActivoUsuario.forEach(a => {
+      const label = `#${a.numero_anilla} (${a.nombre || a.codigo_identificacion}) - ${this.normalizarVariedadFemenino(a.variedad)}`;
+      if (a.sexo === 'Macho' && selectPolladaPadre) {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = label;
+        selectPolladaPadre.appendChild(opt);
+      } else if (a.sexo === 'Hembra' && selectPolladaMadre) {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = label;
+        selectPolladaMadre.appendChild(opt);
+      }
+    });
+
+    const hoyIso = new Date().toISOString().split('T')[0];
+    const polladaFechaNac = document.getElementById('pollada-fecha-nac');
+    if (polladaFechaNac) polladaFechaNac.value = hoyIso;
+    const polladaFecha = document.getElementById('pollada-fecha');
+    if (polladaFecha) polladaFecha.value = hoyIso;
+  },
+
+  obtenerSiguienteAnillaRealUsuario() {
+    const u = this.estado.usuarioActivo || window.usuarioActual || null;
+    const avesUsuario = (u && !this.estado.modoVisitante)
+      ? (this.estado.animales || []).filter(a => this.perteneceAUsuarioActivo(a, u))
+      : [];
+    if (avesUsuario.length === 0) return '';
+
+    let maxNum = 0;
+    let prefijoMax = '';
+    let padLenMax = 4;
+    avesUsuario.forEach(a => {
+      const str = String(a.numero_anilla || '').trim();
+      const m = str.match(/^(.*?)(\d+)$/);
+      if (m) {
+        const n = parseInt(m[2], 10);
+        if (n > maxNum) {
+          maxNum = n;
+          prefijoMax = m[1];
+          padLenMax = m[2].length;
+        }
+      }
+    });
+    if (maxNum > 0) {
+      return prefijoMax + String(maxNum + 1).padStart(padLenMax, '0');
+    }
+    return '';
+  },
+
   cambiarSubtabAlta(modo) {
     const secInd = document.getElementById('subtab-alta-individual');
     const secPol = document.getElementById('subtab-alta-pollada');
@@ -5606,14 +5677,7 @@ const app = {
       if (secPol) secPol.classList.remove('hidden');
       if (btnPol) btnPol.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 bg-emerald-500 text-slate-950 shadow';
       if (btnInd) btnInd.className = 'flex-1 py-2.5 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-300 hover:text-white';
-      const polladaFecha = document.getElementById('pollada-fecha-nac');
-      if (polladaFecha && !polladaFecha.value) {
-        polladaFecha.valueAsDate = new Date();
-      }
-      const cont = document.getElementById('pollada-filas-container');
-      if (cont && cont.children.length === 0) {
-        this.generarFilasAnillasCorrelativasPollada();
-      }
+      this.cargarFormularioPollada();
     } else {
       if (secInd) secInd.classList.remove('hidden');
       if (secPol) secPol.classList.add('hidden');
@@ -5623,8 +5687,11 @@ const app = {
   },
 
   generarFilasAnillasCorrelativasPollada() {
-    const inicioStr = (document.getElementById('pollada-anilla-inicio')?.value || '0001').trim();
-    const cantidad = Math.min(50, Math.max(1, parseInt(document.getElementById('pollada-cantidad-hermanos')?.value, 10) || 5));
+    const inputInicioEl = document.getElementById('pollada-anilla-inicio');
+    const inicioManual = (inputInicioEl?.value || '').trim();
+    const inicioStr = inicioManual || this.obtenerSiguienteAnillaRealUsuario();
+    const cantidadRaw = parseInt(document.getElementById('pollada-cantidad-hermanos')?.value, 10);
+    const cantidad = Math.min(50, Math.max(1, !isNaN(cantidadRaw) && cantidadRaw > 0 ? cantidadRaw : 1));
     const sexoModo = document.getElementById('pollada-sexo-defecto')?.value || 'Hembra';
     const listaManual = (document.getElementById('pollada-anillas-lista-manual')?.value || '').trim();
     const cont = document.getElementById('pollada-filas-container');
@@ -5633,7 +5700,7 @@ const app = {
     let anillas = [];
     if (listaManual) {
       anillas = listaManual.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean);
-    } else {
+    } else if (inicioStr) {
       const matchNum = inicioStr.match(/^(.*?)(\d+)$/);
       if (matchNum) {
         const prefijo = matchNum[1];
@@ -5646,6 +5713,10 @@ const app = {
         for (let i = 1; i <= cantidad; i++) {
           anillas.push(`${inicioStr}-${String(i).padStart(2, '0')}`);
         }
+      }
+    } else {
+      for (let i = 0; i < cantidad; i++) {
+        anillas.push('');
       }
     }
 
@@ -5682,13 +5753,15 @@ const app = {
     if (!cont) return;
     const totalActual = cont.querySelectorAll('.pollada-fila-item').length;
     const inputs = cont.querySelectorAll('.pollada-input-anilla');
-    let siguienteAnilla = String(totalActual + 1).padStart(4, '0');
+    let siguienteAnilla = '';
     if (inputs.length > 0) {
       const ultima = inputs[inputs.length - 1].value.trim();
       const m = ultima.match(/^(.*?)(\d+)$/);
       if (m) {
         siguienteAnilla = m[1] + String(parseInt(m[2], 10) + 1).padStart(m[2].length, '0');
       }
+    } else {
+      siguienteAnilla = this.obtenerSiguienteAnillaRealUsuario();
     }
     cont.insertAdjacentHTML('beforeend', this.crearHtmlFilaHermanoPollada(totalActual + 1, siguienteAnilla, 'Hembra'));
   },
@@ -5824,6 +5897,12 @@ const app = {
     this.estado.syncQueue = await this.db.getAll('syncQueue');
     this.actualizarContadorSyncQueue();
     this.poblarSelectores();
+    this.cargarFormularioPollada();
+    const formPol = document.getElementById('form-alta-pollada');
+    if (formPol) formPol.reset();
+    const contFilas = document.getElementById('pollada-filas-container');
+    if (contFilas) contFilas.innerHTML = '';
+    this.cargarFormularioPollada();
     this.renderizarCenso();
     this.actualizarKPIs();
 
