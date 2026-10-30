@@ -7843,111 +7843,126 @@ const app = {
     return [
       {
         num: 1,
-        nombre: '1. Cabeza y Cráneo',
-        baremo: 'Bloque 1 (Cabeza, Cresta y Cara · Máx 15p)',
-        estandarGallo: 'Cabeza medianamente larga, ancha y fuerte, bien proporcionada y de porte altivo.',
-        estandarGallina: 'Cabeza fina, proporcionada y de líneas suaves.',
-        defectosTaras: 'Cabeza estrecha, alargada tipo cuervo o desproporcionada.',
-        consejoCampo: 'Verificar anchura craneal sujetando suavemente al ejemplar de frente.'
+        nombre: 'Región 1: Cabeza, Cráneo y Cara',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 1 (Máx 15p)',
+        estandar: 'Cabeza grande por cresta y barbillas, cráneo moderadamente grande, ancho y largo. Cara lisa y de color rojo vivo.',
+        estandarGallo: 'Cabeza grande por cresta y barbillas, cráneo moderadamente grande, ancho y largo. Cara lisa y de color rojo vivo.',
+        estandarGallina: 'Cabeza proporcionada, cráneo moderadamente grande, ancho y largo. Cara lisa y de color rojo vivo.',
+        defectosTaras: 'Cara blanca o con invasión de esmalte, cráneo estrecho o deformado.',
+        consejoCampo: 'Verificar cráneo moderadamente grande, ancho y largo y cara lisa de color rojo vivo.'
       },
       {
         num: 2,
-        nombre: '2. Cresta (5-6 Dientes)',
-        baremo: 'Bloque 1 (Cabeza, Cresta y Cara · Máx 15p)',
-        estandarGallo: 'Sencilla, derecha, firme, de tamaño medio a grande, rojo vivo, con 5 a 6 dientes bien definidos y espolón siguiendo la línea de la nuca sin tocarla.',
-        estandarGallina: 'Sencilla, mediana, derecha o ligeramente inclinada hacia un lado en su parte posterior durante la puesta.',
-        defectosTaras: 'DESCALIFICA: Cresta doble, en rosa, bifurcada, con claveles laterales o caída tapando el ojo en el gallo.',
-        consejoCampo: 'Contar los dientes bien aserrados (5-6) y comprobar que no existan apéndices laterales.'
+        nombre: 'Región 2: Cresta',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 1 (Máx 15p)',
+        estandar: 'Sencilla y derecha en el gallo, con 5 a 6 dientes bien definidos y largos. Lóbulo posterior siguiendo la línea de la nuca SIN TOCARLA. En la gallina es mediana y caída hacia un lado sin tapar el ojo. Color rojo intenso.',
+        estandarGallo: 'Sencilla y derecha en el gallo, con 5 a 6 dientes bien definidos y largos. Lóbulo posterior siguiendo la línea de la nuca SIN TOCARLA. Color rojo intenso.',
+        estandarGallina: 'En la gallina es mediana y caída hacia un lado sin tapar el ojo. Color rojo intenso.',
+        defectosTaras: 'Cresta doble, bifurcada, con apéndices laterales, lóbulo tocando la nuca en el gallo o caída tapando el ojo.',
+        consejoCampo: 'Contar los 5 a 6 dientes bien definidos y largos y comprobar que el lóbulo posterior siga la línea de la nuca SIN TOCARLA.'
       },
       {
         num: 3,
-        nombre: '3. Cara y Ojos',
-        baremo: 'Bloque 1 (Cabeza, Cresta y Cara · Máx 15p)',
-        estandarGallo: 'Cara lisa, roja viva sin trazas de blanco. Ojos grandes, vivos, con iris rojo anaranjado intenso.',
-        estandarGallina: 'Cara roja lisa y ojos grandes de expresión vivaz con iris rojo anaranjado.',
-        defectosTaras: 'DESCALIFICA: Cara blanca (invasión de esmalte en cara) o iris perlado/grisáceo/negro.',
-        consejoCampo: 'Observar el iris bajo luz natural lateral para confirmar el tono rojo anaranjado.'
+        nombre: 'Región 3: Barbillas y Orejillas',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 1 (Máx 15p)',
+        estandar: 'Barbillas grandes/muy grandes y largas en el gallo; medianas en la gallina (rojo vivo). Orejillas ovaladas, de tamaño medio y BLANCO PURO.',
+        estandarGallo: 'Barbillas grandes/muy grandes y largas en el gallo (rojo vivo). Orejillas ovaladas, de tamaño medio y BLANCO PURO.',
+        estandarGallina: 'Barbillas medianas en la gallina (rojo vivo). Orejillas ovaladas, de tamaño medio y BLANCO PURO.',
+        defectosTaras: 'Tara grave: Orejilla amarilla, roja o con >1/3 de rojo.',
+        consejoCampo: 'Inspeccionar que las orejillas sean ovaladas, de tamaño medio y BLANCO PURO, descartando orejilla amarilla, roja o con >1/3 de rojo.'
       },
       {
         num: 4,
-        nombre: '4. Pico y Barbillas',
-        baremo: 'Bloque 1 (Cabeza, Cresta y Cara · Máx 15p)',
-        estandarGallo: 'Pico fuerte y bien curvado: color córneo con manchas negras para las variedades Negra Moteada y Pinta o Exchequer, y color hueso para la variedad Blanca. Barbillas medianamente largas, ovaladas, finas y sin pliegues.',
-        estandarGallina: 'Pico proporcionado (córneo con manchas negras en Negra Moteada / Pinta o Exchequer, y color hueso en Blanca) y barbillas redondeadas, finas y de rojo intenso.',
-        defectosTaras: 'DESCALIFICA: Pico amarillo, pico cruzado, prognatismo o manchas blancas en barbillas.',
-        consejoCampo: 'Verificar el color del pico según variedad: córneo con manchas negras en Moteada/Exchequer y color hueso en Blanca.'
+        nombre: 'Región 4: Ojos y Pico',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 1 (Máx 15p)',
+        estandar: 'Ojos grandes con iris color ANARANJADO. Pico medio y ligeramente curvado.',
+        detalleCromatico: 'Pico color córneo con manchas negras (mandíbula superior más oscura) en variedades Moteada y Exchequer; pico color HUESO en variedad Blanca.',
+        estandarGallo: 'Ojos grandes con iris color ANARANJADO. Pico medio y ligeramente curvado. Pico color córneo con manchas negras (mandíbula superior más oscura) en variedades Moteada y Exchequer; pico color HUESO en variedad Blanca.',
+        estandarGallina: 'Ojos grandes con iris color ANARANJADO. Pico medio y ligeramente curvado. Pico color córneo con manchas negras (mandíbula superior más oscura) en variedades Moteada y Exchequer; pico color HUESO en variedad Blanca.',
+        defectosTaras: 'Iris de color distinto al anaranjado o pico amarillo/cruzado.',
+        consejoCampo: 'Comprobar iris color ANARANJADO y detalle cromático del pico según variedad (córneo con manchas negras en Moteada/Exchequer; HUESO en Blanca).'
       },
       {
         num: 5,
-        nombre: '5. Orejillas (Blanco Puro)',
-        baremo: 'Bloque 1 (Cabeza, Cresta y Cara · Máx 15p)',
-        estandarGallo: 'De tamaño mediano, almendradas, lisas, ceñidas y de color BLANCO PURO esmaltado.',
-        estandarGallina: 'Ovaladas/almendradas, lisas y de color blanco puro brillante.',
-        defectosTaras: 'DESCALIFICACIÓN OFICIAL #1: Orejilla amarilla, roja o con exceso de rojo (debe ser blanco puro).',
-        consejoCampo: 'Rasgo crítico ESGA025: verificar ausencia total de color amarillo, rojo o exceso de rojo en la orejilla.'
+        nombre: 'Región 5: Cuello y Esclavina',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 2 (Máx 10p)',
+        estandar: 'Cuello largo, erguido, con la cabeza por encima de la cola. Esclavina hasta el dorso SIN CUBRIR LOS HOMBROS.',
+        estandarGallo: 'Cuello largo, erguido, con la cabeza por encima de la cola. Esclavina hasta el dorso SIN CUBRIR LOS HOMBROS.',
+        estandarGallina: 'Cuello largo, erguido, con la cabeza por encima de la cola. Esclavina hasta el dorso SIN CUBRIR LOS HOMBROS.',
+        defectosTaras: 'Tara grave: Flameado de plumas rojizas/doradas en esclavina.',
+        consejoCampo: 'Verificar que la esclavina llegue hasta el dorso SIN CUBRIR LOS HOMBROS y descartar flameado de plumas rojizas/doradas.'
       },
       {
         num: 6,
-        nombre: '6. Cuello y Esclavina',
-        baremo: 'Bloque 2 (Cuello y Esclavina · Máx 10p)',
-        estandarGallo: 'Cuello medianamente largo, erguido y bien arqueado. Esclavina muy abundante cubriendo bien los hombros.',
-        estandarGallina: 'Cuello gracioso con esclavina bien poblada sin transiciones bruscas.',
-        defectosTaras: 'DESCALIFICACIÓN OFICIAL #4: Flameado de esclavina en variedades Moteada y Exchequer.',
-        consejoCampo: 'Abrir las plumas de la esclavina en ejemplares de Negra Moteada y Pinta o Exchequer para descartar flameado.'
+        nombre: 'Región 6: Pecho (Diferenciador Racial Clave)',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 3 (Máx 20p)',
+        estandar: 'Pecho NO PROMINENTE y RECTO/PLANO en el gallo. Ligeramente más prominente en la gallina.',
+        estandarGallo: 'Pecho NO PROMINENTE y RECTO/PLANO en el gallo.',
+        estandarGallina: 'Ligeramente más prominente en la gallina.',
+        defectosTaras: 'Tara descalificante: Pecho prominente, abombado o redondeado en machos.',
+        consejoCampo: 'Diferenciador racial clave: en el gallo el pecho debe ser NO PROMINENTE y RECTO/PLANO.'
       },
       {
         num: 7,
-        nombre: '7. Dorso, Silla y Caireles',
-        baremo: 'Bloque 3 y 7 (Tronco y Desarrollo · 20p + 10p)',
-        estandarGallo: 'Dorso ancho en los hombros, largo y ligeramente inclinado hacia atrás. Silla ancha con abundantes caireles.',
-        estandarGallina: 'Dorso ancho, largo, recto y suavemente inclinado hacia la cola.',
-        defectosTaras: 'DESCALIFICA: Dorso jorobado (cifosis), desviación de columna o grupa estrecha.',
-        consejoCampo: 'Palpar la línea dorsal desde los hombros hasta la rabadilla comprobando rectitud ósea.'
+        nombre: 'Región 7: Dorso y Línea Dorsal',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 3 (Máx 20p)',
+        estandar: 'Largo, de anchura media e INCLINADO 40º respecto a la horizontal desde los hombros hacia la cola. En la gallina es ligeramente inclinado u horizontal.',
+        estandarGallo: 'Largo, de anchura media e INCLINADO 40º respecto a la horizontal desde los hombros hacia la cola.',
+        estandarGallina: 'En la gallina es ligeramente inclinado u horizontal.',
+        defectosTaras: 'Dorso corto, arqueado o con deformaciones vertebrales.',
+        consejoCampo: 'Comprobar de perfil la inclinación dorsal de 40º respecto a la horizontal desde los hombros hacia la cola en el gallo.'
       },
       {
         num: 8,
-        nombre: '8. Pecho y Quilla (Perfil Plano)',
-        baremo: 'Bloque 3 (Pecho y Tronco · Máx 20p)',
-        estandarGallo: 'Pecho de perfil RECTO Y PLANO característico de la raza Alacantina (nunca prominente ni abombado). Quilla larga y recta.',
-        estandarGallina: 'Pecho recto y plano, profundo y bien sostenido.',
-        defectosTaras: 'DESCALIFICACIÓN OFICIAL #2: Pecho prominente o abombado (debe ser recto y plano).',
-        consejoCampo: 'Observar al ejemplar de perfil estricto y palpar el esternón: la línea anterior del pecho debe ser recta y plana.'
+        nombre: 'Región 8: Tronco y Abdomen',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 3 (Máx 20p)',
+        estandar: 'Tronco esbelto, largo y en forma de triángulo (cabeza más alta que la cola). Abdomen poco desarrollado en el gallo y más desarrollado en la gallina ponedora.',
+        estandarGallo: 'Tronco esbelto, largo y en forma de triángulo (cabeza más alta que la cola). Abdomen poco desarrollado en el gallo.',
+        estandarGallina: 'Tronco esbelto, largo y en forma de triángulo (cabeza más alta que la cola). Abdomen más desarrollado en la gallina ponedora.',
+        defectosTaras: 'Tronco rechoncho, pesado o falto de esbeltez triangular.',
+        consejoCampo: 'Verificar la silueta general en forma de triángulo con la cabeza más alta que la cola.'
       },
       {
         num: 9,
-        nombre: '9. Alas y Hombros',
-        baremo: 'Bloque 3 y 6 (Tronco y Plumaje · 20p + 10p)',
-        estandarGallo: 'Alas grandes, fuertes, bien ceñidas al cuerpo y llevadas horizontalmente sin sobrepasar el tronco.',
-        estandarGallina: 'Alas bien plegadas y pegadas a los flancos.',
-        defectosTaras: 'DESCALIFICA: Ala caída, ala hendida (espacio axial abierto entre primarias y secundarias) o remeras retorcidas.',
-        consejoCampo: 'Desplegar ambas alas para verificar la integridad de las plumas remeras primarias y secundarias.'
+        nombre: 'Región 9: Cola y Porte',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 4 (Máx 20p)',
+        estandar: 'Tamaño medio, MUY ALTA, llevada exactamente a 70º respecto a la horizontal. En la gallina es algo más baja y abierta.',
+        estandarGallo: 'Tamaño medio, MUY ALTA, llevada exactamente a 70º respecto a la horizontal.',
+        estandarGallina: 'En la gallina es algo más baja y abierta.',
+        defectosTaras: 'Tara grave: Cola baja (<70º), cola de ardilla (>80º) o cola larga.',
+        consejoCampo: 'Evaluar al ejemplar en estación natural: cola de tamaño medio, MUY ALTA, llevada exactamente a 70º respecto a la horizontal.'
       },
       {
         num: 10,
-        nombre: '10. Cola y Porte (Ángulo ≥ 70º)',
-        baremo: 'Bloque 4 (Cola y Porte · Máx 20p)',
-        estandarGallo: 'Cola bien poblada, llevada erguida en ángulo de al menos 70º sobre la horizontal y de longitud proporcionada. Hoces bien curvadas.',
-        estandarGallina: 'Cola bien desarrollada, ligeramente abierta en abanico y llevada a ≥70º sobre la horizontal.',
-        defectosTaras: 'DESCALIFICACIÓN OFICIAL #3: Cola baja (<70º sobre la horizontal) o larga.',
-        consejoCampo: 'Evaluar al ave en reposo libre en suelo plano antes de capturarla para verificar que la cola no sea baja (<70º) ni excesivamente larga.'
+        nombre: 'Región 10: Alas',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 3 y 6',
+        estandar: 'Grandes, plegadas y ceñidas al cuerpo en línea paralela al dorso.',
+        estandarGallo: 'Grandes, plegadas y ceñidas al cuerpo en línea paralela al dorso.',
+        estandarGallina: 'Grandes, plegadas y ceñidas al cuerpo en línea paralela al dorso.',
+        defectosTaras: 'Alas caídas, separadas del cuerpo o cruzadas.',
+        consejoCampo: 'Comprobar que las alas vayan grandes, bien plegadas y ceñidas al cuerpo en línea paralela al dorso.'
       },
       {
         num: 11,
-        nombre: '11. Muslos y Tarsos',
-        baremo: 'Bloque 5 (Extremidades y Tarsos · Máx 15p)',
-        estandarGallo: 'Muslos largos, fuertes y visibles. Tarsos desnudos blanco-rosáceos con roña en Negra Moteada y Pinta o Exchequer, o blanco-rosáceos con pico hueso en Blanca.',
-        estandarGallina: 'Muslos bien formados y tarsos limpios blanco-rosáceos con roña en Moteada/Exchequer, o blanco-rosáceos con pico hueso en Blanca.',
-        defectosTaras: 'DESCALIFICACIÓN OFICIAL #5: Tarsos amarillos (deben ser blanco-rosáceos con roña en Moteada/Exchequer, o blanco-rosáceos con pico hueso en Blanca).',
-        consejoCampo: 'Inspeccionar las escamas de los tarsos verificando color blanco-rosáceo (con roña en Moteada/Exchequer o con pico hueso en Blanca) y ausencia total de pigmento amarillo.'
+        nombre: 'Región 11: Muslos y Tarsos',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 5 (Máx 15p)',
+        estandar: 'Muslos largos y muy visibles en el gallo; más cortos en la gallina. Tarsos semiflexionados, largos, lisos y libres de plumas. 4 dedos rectos.',
+        detalleCromatico: 'Tarsos blanco-rosáceos con roña (manchas oscuras) en Moteada y Exchequer; blanco-rosáceos en Blanca.',
+        estandarGallo: 'Muslos largos y muy visibles en el gallo. Tarsos semiflexionados, largos, lisos y libres de plumas. 4 dedos rectos. Tarsos blanco-rosáceos con roña (manchas oscuras) en Moteada y Exchequer; blanco-rosáceos en Blanca.',
+        estandarGallina: 'Muslos más cortos en la gallina. Tarsos semiflexionados, largos, lisos y libres de plumas. 4 dedos rectos. Tarsos blanco-rosáceos con roña (manchas oscuras) en Moteada y Exchequer; blanco-rosáceos en Blanca.',
+        defectosTaras: 'Tara descalificante: Tarsos amarillos o con plumas/calzas.',
+        consejoCampo: 'Verificar tarsos semiflexionados, largos, lisos, libres de plumas, 4 dedos rectos y color blanco-rosáceo (con roña en Moteada/Exchequer; blanco-rosáceos en Blanca).'
       },
       {
         num: 12,
-        nombre: '12. Dedos, Peso y Variedades en Femenino',
-        baremo: 'Bloque 5, 6 y 7 (Extremidades, Variedad y Peso · 15p + 10p + 10p)',
-        estandarGallo: 'Cuatro (4) dedos rectos y limpios. Anilla oficial: 20 mm. Peso oficial Gallo: 3,000–3,500 kg (Media: 3.25 kg). Variedades en femenino: Negra Moteada (Oficial), Pinta o Exchequer (Oficial), Blanca (Oficial), Milflores y Armiñada en negro.',
-        estandarGallina: 'Cuatro (4) dedos rectos y limpios. Anilla oficial: 18 mm. Peso oficial Gallina: 2,200–2,600 kg (Media: 2.40 kg). Plumaje ceñido acorde a las 5 variedades en femenino.',
-        defectosTaras: 'DESCALIFICA: Polidactilia (5 dedos), peso fuera de rango oficial (♂ 3.00-3.50 kg / ♀ 2.20-2.60 kg) o variedades ajenas al estándar.',
-        consejoCampo: 'Comprobar los 4 dedos, el calibre de anilla (20mm Macho / 18mm Hembra) y pesar en báscula digital (medias: 3.25 kg Macho / 2.40 kg Hembra).'
+        nombre: 'Región 12: Plumaje, Variedad y Peso',
+        baremo: 'Estándar ESGA025 (FESACOCUR 20/03/2025) · Bloque 6 y 7 (10p + 10p)',
+        estandar: 'Plumaje ceñido.',
+        rangosPonderales: 'Gallo 3,000 kg – 3,500 kg (media 3.25 kg) | Gallina 2,200 kg – 2,600 kg (media 2.40 kg).',
+        estandarGallo: 'Plumaje ceñido. Rangos ponderales: Gallo 3,000 kg – 3,500 kg (media 3.25 kg). Anilla oficial: 20 mm.',
+        estandarGallina: 'Plumaje ceñido. Rangos ponderales: Gallina 2,200 kg – 2,600 kg (media 2.40 kg). Anilla oficial: 18 mm.',
+        defectosTaras: 'Plumaje hueco o suelto, o peso fuera de los rangos ponderales oficiales (Gallo 3,000–3,500 kg / Gallina 2,200–2,600 kg).',
+        consejoCampo: 'Verificar plumaje ceñido y peso en báscula dentro del rango oficial: Gallo 3,000 kg – 3,500 kg (media 3.25 kg) | Gallina 2,200 kg – 2,600 kg (media 2.40 kg).'
       }
     ];
   },
@@ -7996,18 +8011,24 @@ const app = {
             ${this.escaparHtml(reg.baremo)}
           </span>
         </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-amber-500/40 space-y-1.5">
+          <span class="text-[10px] font-black text-amber-400 uppercase block">📜 Estándar Oficial ESGA025 (FESACOCUR 20/03/2025):</span>
+          <p class="text-white font-semibold leading-snug">${this.escaparHtml(reg.estandar)}</p>
+          ${reg.detalleCromatico ? `<p class="text-cyan-300 text-[11px] font-medium pt-1"><strong class="text-cyan-400">🎨 Detalle cromático:</strong> ${this.escaparHtml(reg.detalleCromatico)}</p>` : ''}
+          ${reg.rangosPonderales ? `<p class="text-emerald-300 text-[11px] font-medium pt-1"><strong class="text-emerald-400">⚖️ Rangos ponderales:</strong> ${this.escaparHtml(reg.rangosPonderales)}</p>` : ''}
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
           <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-[10px] font-black text-sky-400 uppercase block">♂ Estándar en Gallo (20mm):</span>
+            <span class="text-[10px] font-black text-sky-400 uppercase block">♂ Aplicación en Gallo (20mm):</span>
             <p class="text-slate-200 mt-0.5 leading-snug">${this.escaparHtml(reg.estandarGallo)}</p>
           </div>
           <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-[10px] font-black text-pink-400 uppercase block">♀ Estándar en Gallina (18mm):</span>
+            <span class="text-[10px] font-black text-pink-400 uppercase block">♀ Aplicación en Gallina (18mm):</span>
             <p class="text-slate-200 mt-0.5 leading-snug">${this.escaparHtml(reg.estandarGallina)}</p>
           </div>
         </div>
         <div class="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/70">
-          <span class="text-[10px] font-black text-rose-400 uppercase block">🚫 Defectos y Descalificaciones (CNZ 2025):</span>
+          <span class="text-[10px] font-black text-rose-400 uppercase block">🚫 Tara Grave / Descalificante (FESACOCUR 2025):</span>
           <p class="text-rose-200 font-semibold mt-0.5">${this.escaparHtml(reg.defectosTaras)}</p>
         </div>
         <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-800/60 flex items-center gap-2">
@@ -8026,7 +8047,9 @@ const app = {
     const filtradas = filtroTexto
       ? regiones.filter(r =>
           this.coincideTextoFlexible(r.nombre, filtroTexto) ||
-          this.coincideTextoFlexible(r.estandarGallo, filtroTexto) ||
+          this.coincideTextoFlexible(r.estandar, filtroTexto) ||
+          this.coincideTextoFlexible(r.detalleCromatico || '', filtroTexto) ||
+          this.coincideTextoFlexible(r.rangosPonderales || '', filtroTexto) ||
           this.coincideTextoFlexible(r.defectosTaras, filtroTexto)
         )
       : regiones;
@@ -8038,12 +8061,13 @@ const app = {
             <span class="font-black text-amber-400 text-sm">${this.escaparHtml(r.nombre)}</span>
             <span class="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-mono text-[10px] border border-slate-800">Región #${r.num}</span>
           </div>
-          <p class="text-[11px] text-slate-300"><strong class="text-sky-400">♂ Gallo:</strong> ${this.escaparHtml(r.estandarGallo)}</p>
-          <p class="text-[11px] text-slate-300"><strong class="text-pink-400">♀ Gallina:</strong> ${this.escaparHtml(r.estandarGallina)}</p>
+          <p class="text-[11px] text-slate-200"><strong class="text-amber-300">Estándar:</strong> ${this.escaparHtml(r.estandar)}</p>
+          ${r.detalleCromatico ? `<p class="text-[11px] text-cyan-300"><strong class="text-cyan-400">Detalle cromático:</strong> ${this.escaparHtml(r.detalleCromatico)}</p>` : ''}
+          ${r.rangosPonderales ? `<p class="text-[11px] text-emerald-300"><strong class="text-emerald-400">Rangos ponderales:</strong> ${this.escaparHtml(r.rangosPonderales)}</p>` : ''}
         </div>
         <div class="space-y-1.5 pt-2 border-t border-slate-900">
           <div class="p-2 rounded bg-rose-950/40 border border-rose-900/60 text-[11px] text-rose-200">
-            <strong class="text-rose-400 block uppercase text-[10px]">Descalificaciones:</strong>
+            <strong class="text-rose-400 block uppercase text-[10px]">Taras / Descalificaciones:</strong>
             ${this.escaparHtml(r.defectosTaras)}
           </div>
           <div class="text-[10px] text-emerald-300 font-medium">
