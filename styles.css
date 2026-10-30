@@ -260,3 +260,81 @@
   border: 3px solid #facc15 !important;
 }
 
+/* ============================================================================
+   FIX CRÍTICO V6: DESBLOQUEO DE EVENTOS TÁCTILES, Z-INDEX 99999,
+   ELIMINACIÓN DE OVERFLOW-X Y CABECERA MÓVIL COMPACTA
+   ============================================================================ */
+
+html,
+body,
+#app,
+#main-container,
+main {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
+#barra-inferior-navegacion {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+#barra-inferior-navegacion button,
+#barra-inferior-navegacion .bottom-nav-btn {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  cursor: pointer !important;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Asegurar que modales ocultos nunca intercepten toques en pantalla */
+.hidden,
+#modal-auth-acceso.hidden,
+.backdrop.hidden,
+.modal-backdrop.hidden {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 640px) {
+  #header,
+  #header-top-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  #header {
+    flex-direction: column !important;
+  }
+
+  #header-usuario,
+  #user-nombre-display {
+    max-width: 110px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+  }
+
+  #user-rol-display,
+  #user-rega-display,
+  .header-secondary-text-mobile {
+    display: none !important;
+  }
+
+  #header-busqueda-rapida-anilla-mobile,
+  #header-busqueda-mobile-wrapper {
+    flex: 1 1 auto !important;
+    max-width: 130px !important;
+    min-width: 0 !important;
+  }
+}
+
+

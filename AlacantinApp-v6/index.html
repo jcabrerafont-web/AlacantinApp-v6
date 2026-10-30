@@ -44,28 +44,65 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Estilos Personalizados Complementarios -->
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=6.2.0">
+  <style>
+    html, body, #app, #main-container {
+      max-width: 100vw !important;
+      overflow-x: hidden !important;
+    }
+    #barra-inferior-navegacion {
+      z-index: 99999 !important;
+      pointer-events: auto !important;
+      touch-action: manipulation;
+    }
+    #barra-inferior-navegacion button {
+      pointer-events: auto !important;
+      touch-action: manipulation;
+    }
+    @media (max-width: 640px) {
+      #header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        flex-wrap: wrap;
+      }
+      #header-usuario,
+      #user-nombre-display {
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #header-busqueda-rapida-anilla-mobile {
+        flex: 1;
+        max-width: 130px;
+      }
+    }
+  </style>
 </head>
-<body class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-200">
+<body id="app" class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-200">
 
   <!-- ========================================================================= -->
-  <!-- BARRA DE ESTADO Y CABECERA OFICIAL (ALACANTINAPP V6)                      -->
+  <!-- BARRA DE ESTADO Y CABECERA OFICIAL COMPACTA (ALACANTINAPP V6)             -->
   <!-- ========================================================================= -->
-  <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+  <header id="header" class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40 w-full max-w-full box-border">
     <!-- Banner de aviso offline si no hay red -->
-    <div id="offline-banner" class="hidden bg-amber-600 text-slate-950 px-4 py-1.5 text-xs font-semibold text-center flex items-center justify-center gap-2">
+    <div id="offline-banner" class="hidden w-full bg-amber-600 text-slate-950 px-3 py-1 text-[11px] font-semibold text-center flex items-center justify-center gap-1.5">
       <i class="fa-solid fa-triangle-exclamation"></i>
-      <span>MODO OFFLINE ACTIVO: Sesión persistente activa. Los registros, cambios de REGA y actas se guardan en IndexedDB (SyncQueue) y se sincronizarán al recuperar la red.</span>
+      <span class="truncate">MODO OFFLINE ACTIVO: Guardado local en IndexedDB (SyncQueue).</span>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-2">
-      <!-- Logo y Título Oficial -->
-      <div class="flex items-center space-x-3">
-        <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-11 w-11 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md">
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">AlacantinApp <span class="text-amber-400 font-extrabold">v6</span></h1>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+    <div id="header-top-row" class="w-full max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-2 box-border">
+      <!-- Logo y Título Oficial Compacto -->
+      <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 min-w-0">
+        <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-8 w-8 sm:h-11 sm:w-11 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md shrink-0">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-xs sm:text-lg font-bold text-white tracking-tight whitespace-nowrap">Alacantin<span class="hidden xs:inline">App</span> <span class="text-amber-400 font-extrabold">v6</span></h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
               ESGA025
             </span>
           </div>
@@ -73,6 +110,18 @@
             Libro Genealógico Oficial · Protocolo CNZ (5 junio 2025) · RD 45/2019
           </p>
         </div>
+      </div>
+
+      <!-- BUSCADOR RÁPIDO MÓVIL COMPACTO (max-width: 130px en móvil) -->
+      <div id="header-busqueda-mobile-wrapper" class="md:hidden relative flex-1 max-w-[130px] min-w-0 mx-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400 text-[10px] pointer-events-none"></i>
+        <input type="search"
+               id="header-busqueda-rapida-anilla-mobile"
+               oninput="app.busquedaRapidaCabecera(this.value)"
+               onkeydown="if(event.key==='Enter'){ event.preventDefault(); app.ejecutarBusquedaRapidaCabecera(this.value); }"
+               placeholder="🔍 Anilla..."
+               style="flex: 1; max-width: 130px;"
+               class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-full pl-6 pr-2 py-1 text-[11px] text-white placeholder-slate-400 font-mono focus:outline-none">
       </div>
 
       <!-- BARRA DE BÚSQUEDA RÁPIDA EN CABECERA FIJA (ESCRITORIO / TABLET) -->
@@ -97,17 +146,17 @@
         </div>
       </div>
 
-      <!-- Indicadores de Conexión, Aviario Activo, Sincronización, Configuración y Pastilla de Usuario -->
-      <div class="flex items-center space-x-2 sm:space-x-2.5">
-        <!-- Badge de Aviario Activo (Clic para Configurar / Editar datos en cualquier momento) -->
-        <button id="badge-aviario-activo" onclick="app.abrirModalAviario()" title="Aviario Activo (Pulsar para configurar o editar datos)" class="hidden md:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-400 text-left transition shadow-sm max-w-[170px] sm:max-w-xs group">
+      <!-- Indicadores de Conexión, Aviario Activo, Sincronización, Configuración y Pastilla de Usuario Compacta -->
+      <div class="flex items-center space-x-1 sm:space-x-2 shrink-0 min-w-0">
+        <!-- Badge de Aviario Activo (Solo Escritorio) -->
+        <button id="badge-aviario-activo" onclick="app.abrirModalAviario()" title="Aviario Activo (Pulsar para configurar o editar datos)" class="hidden lg:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-400 text-left transition shadow-sm max-w-[170px] sm:max-w-xs group">
           <div class="h-7 w-7 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs flex-shrink-0 group-hover:scale-105 transition-transform">
             <i class="fa-solid fa-location-dot"></i>
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-1.5 leading-tight">
               <span id="badge-aviario-nombre" class="font-bold text-xs text-white truncate">Sin Sesión</span>
-              <span id="badge-aviario-estado" class="text-[9px] px-1 py-0.2 rounded font-semibold bg-slate-800 text-slate-400 border border-slate-700 hidden lg:inline">Visitante</span>
+              <span id="badge-aviario-estado" class="text-[9px] px-1 py-0.2 rounded font-semibold bg-slate-800 text-slate-400 border border-slate-700 hidden xl:inline">Visitante</span>
             </div>
             <div id="badge-aviario-subtexto" class="text-[10px] text-amber-300 font-mono truncate">
               Sin REGA · Modo Lectura
@@ -116,43 +165,43 @@
           <i class="fa-solid fa-pen text-[10px] text-slate-400 ml-auto hidden sm:inline group-hover:text-amber-400 transition-colors"></i>
         </button>
 
-        <!-- Indicador Online / Offline -->
-        <div id="net-status-badge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
+        <!-- Indicador Online / Offline (Solo Tablet/Escritorio) -->
+        <div id="net-status-badge" class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
           <span class="h-2 w-2 rounded-full bg-emerald-400 pulse-online"></span>
           <span id="net-status-text" class="hidden xl:inline">Online (Supabase)</span>
         </div>
 
-        <!-- Botón Configuración de Supabase -->
-        <button onclick="app.abrirModalConfig()" title="Configuración de Supabase y Base de Datos" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1 transition">
+        <!-- Botón Configuración de Supabase (Solo Tablet/Escritorio) -->
+        <button onclick="app.abrirModalConfig()" title="Configuración de Supabase y Base de Datos" class="hidden sm:flex px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs items-center gap-1 transition">
           <i class="fa-solid fa-sliders text-amber-400"></i>
           <span class="hidden lg:inline">Config</span>
         </button>
 
-        <!-- Badge Monitor Visual de Sincronización Offline (SyncQueue) junto a la pastilla de usuario -->
-        <button id="btn-sync-queue" onclick="app.abrirModalSyncQueue()" title="Monitor de Cola Offline (SyncQueue) y Compresor WebP" class="relative px-2.5 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/70 text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
+        <!-- Badge Monitor Visual de Sincronización Offline (SyncQueue) (Solo Tablet/Escritorio) -->
+        <button id="btn-sync-queue" onclick="app.abrirModalSyncQueue()" title="Monitor de Cola Offline (SyncQueue) y Compresor WebP" class="hidden sm:flex relative px-2.5 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/70 text-xs font-bold items-center gap-1.5 transition shadow-sm">
           <span id="sync-monitor-label" class="whitespace-nowrap">☁️ Sincronizado</span>
           <span id="sync-pending-count" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black text-[10px]">0</span>
         </button>
 
         <!-- ================================================================= -->
-        <!-- PASTILLA / AVATAR DE USUARIO Y MENÚ DESPLEGABLE "MI CUENTA" (V6)  -->
+        <!-- PASTILLA / AVATAR DE USUARIO COMPACTA Y BOTÓN DE CERRAR SESIÓN    -->
         <!-- ================================================================= -->
-        <div class="relative" id="user-account-menu-container">
+        <div class="relative flex items-center gap-1" id="user-account-menu-container">
           <button type="button"
                   id="user-avatar-pill"
                   onclick="app.toggleMenuMiCuenta(event)"
                   title="Mi Cuenta · Ver perfil, actualizar REGA, cambiar contraseña o cerrar sesión"
-                  class="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group">
+                  class="flex items-center gap-1.5 pl-1 pr-2 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[155px] sm:max-w-[260px]">
             <!-- Avatar con iniciales reales del usuario autenticado -->
-            <span id="user-avatar-iniciales" class="h-7 w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-xs flex items-center justify-center shadow-inner shrink-0">
+            <span id="user-avatar-iniciales" class="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-[10px] sm:text-xs flex items-center justify-center shadow-inner shrink-0">
               👤
             </span>
-            <!-- Texto de Nombre, Rol y Estado REGA Dinámico -->
-            <div class="text-left min-w-0 max-w-[175px] sm:max-w-[260px]">
-              <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate">
-                👤 Visitante (Modo Lectura)
+            <!-- Texto de Nombre (Truncado a 110px en móvil) y textos secundarios ocultos en móvil -->
+            <div id="header-usuario" class="text-left min-w-0 max-w-[110px] sm:max-w-[200px] overflow-hidden">
+              <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate" style="max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                Visitante
               </span>
-              <div class="flex items-center gap-1.5 leading-none mt-0.5">
+              <div class="hidden sm:flex items-center gap-1.5 leading-none mt-0.5 header-secondary-text-mobile">
                 <span id="user-rol-display" class="text-[9px] font-mono text-slate-400 truncate">
                   Sin Sesión / Visitante
                 </span>
@@ -161,7 +210,16 @@
                 </span>
               </div>
             </div>
-            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-amber-400 transition"></i>
+            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 group-hover:text-amber-400 transition shrink-0"></i>
+          </button>
+
+          <!-- Botón limpio directo de Cerrar Sesión / Acceso en cabecera móvil -->
+          <button type="button"
+                  id="btn-header-logout-mobile"
+                  onclick="app.cerrarSesion()"
+                  title="Cerrar sesión / Cambiar cuenta"
+                  class="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-rose-950/70 hover:bg-rose-900 border border-rose-800/70 text-rose-300 hover:text-white text-xs flex items-center justify-center transition shrink-0">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
           </button>
 
           <!-- Menú Desplegable "Mi Cuenta" -->
@@ -246,47 +304,32 @@
       </div>
     </div>
 
-    <!-- Subcabecera Compacta: Búsqueda Rápida Móvil + Indicador de Nivel 2 y Guía 12 Regiones -->
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2 border-t border-slate-800/80 bg-slate-900/75 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-      <!-- Búsqueda Rápida de Anilla en Móvil -->
-      <div class="md:hidden relative w-full">
-        <div class="relative flex items-center">
-          <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-amber-400 text-xs pointer-events-none"></i>
-          <input type="search"
-                 id="header-busqueda-rapida-anilla-mobile"
-                 oninput="app.busquedaRapidaCabecera(this.value)"
-                 onkeydown="if(event.key==='Enter'){ event.preventDefault(); app.ejecutarBusquedaRapidaCabecera(this.value); }"
-                 placeholder="Buscar nº de anilla al instante..."
-                 class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-full pl-9 pr-8 py-1.5 text-xs text-white placeholder-slate-400 font-mono focus:outline-none">
-        </div>
+    <!-- Subcabecera Compacta: Indicador de Nivel 2 y Guía 12 Regiones -->
+    <div class="w-full max-w-7xl mx-auto px-2.5 sm:px-6 py-1.5 border-t border-slate-800/80 bg-slate-900/75 flex items-center justify-between gap-2 box-border">
+      <div class="flex items-center gap-1.5 min-w-0">
+        <button type="button"
+                id="btn-volver-herramientas"
+                onclick="app.cambiarTab('herramientas')"
+                class="hidden px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] sm:text-xs font-black flex items-center gap-1 shadow transition shrink-0">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>⚙️ Herramientas</span>
+        </button>
+        <span id="header-active-section-pill" class="text-[11px] sm:text-xs font-bold text-slate-300 truncate flex items-center gap-1.5 min-w-0">
+          <span class="text-amber-400 truncate">🐓 Mi Censo Oficial ESGA025</span>
+        </span>
       </div>
 
-      <div class="flex items-center justify-between w-full gap-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <button type="button"
-                  id="btn-volver-herramientas"
-                  onclick="app.cambiarTab('herramientas')"
-                  class="hidden px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow transition shrink-0">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>⚙️ Volver a Herramientas</span>
-          </button>
-          <span id="header-active-section-pill" class="text-xs font-bold text-slate-300 truncate flex items-center gap-1.5">
-            <span class="text-amber-400">🐓 Mi Censo Oficial ESGA025</span>
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Pestaña Exclusiva Admin (V6) si el usuario es Administrador -->
-          <button onclick="app.cambiarTab('admin')" id="tab-btn-admin" class="hidden tab-nav-btn items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-extrabold transition text-sky-300 bg-sky-950/80 hover:bg-sky-900 border border-sky-500/60 shadow-sm">
-            <i class="fa-solid fa-users-gear text-sky-400"></i>
-            <span>🛡️ Admin RBAC</span>
-          </button>
-          <!-- Botón directo a la Guía Interactiva de Campo (12 Regiones ESGA025) -->
-          <button onclick="app.abrirModalGuiaCampo()" class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition whitespace-nowrap" title="Consultar Guía Interactiva de Campo (12 Regiones Corporales ESGA025)">
-            <i class="fa-solid fa-book-open-reader text-amber-400"></i>
-            <span>Guía 12 Regiones</span>
-          </button>
-        </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Pestaña Exclusiva Admin (V6) si el usuario es Administrador -->
+        <button onclick="app.cambiarTab('admin')" id="tab-btn-admin" class="hidden tab-nav-btn items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-extrabold transition text-sky-300 bg-sky-950/80 hover:bg-sky-900 border border-sky-500/60 shadow-sm">
+          <i class="fa-solid fa-users-gear text-sky-400"></i>
+          <span class="hidden sm:inline">🛡️ Admin RBAC</span>
+        </button>
+        <!-- Botón directo a la Guía Interactiva de Campo (12 Regiones ESGA025) -->
+        <button onclick="app.abrirModalGuiaCampo()" class="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-[11px] sm:text-xs font-bold flex items-center gap-1 transition whitespace-nowrap" title="Consultar Guía Interactiva de Campo (12 Regiones Corporales ESGA025)">
+          <i class="fa-solid fa-book-open-reader text-amber-400"></i>
+          <span>Guía 12 Regiones</span>
+        </button>
       </div>
     </div>
   </header>
@@ -294,7 +337,7 @@
   <!-- ========================================================================= -->
   <!-- CONTENEDOR PRINCIPAL DE PESTAÑAS (SPA CON BARRA INFERIOR FIJA)            -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-28">
+  <main id="main-container" class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-28 box-border">
 
     <!-- Banner Informativo de Promoción Automática para Usuarios con Rol "Aspirante" -->
     <div id="banner-aspirante-promocion" class="hidden mb-5 p-4 rounded-xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-emerald-950/50 border border-amber-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg">
@@ -5362,28 +5405,28 @@
   <!-- ========================================================================= -->
   <!-- NAVEGACIÓN MÓVIL EN 2 NIVELES: BARRA INFERIOR FIJA (4 BOTONES PRINCIPALES)-->
   <!-- ========================================================================= -->
-  <nav id="barra-inferior-navegacion" class="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] no-print">
+  <nav id="barra-inferior-navegacion" style="z-index: 99999 !important; pointer-events: auto !important; touch-action: manipulation;" class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.6)] no-print">
     <div class="max-w-3xl mx-auto px-2 py-1.5 grid grid-cols-4 gap-1.5">
       <!-- 1. 🐓 Mi Censo (#tab-censo) -->
-      <button type="button" id="nav-bottom-censo" onclick="app.cambiarTab('censo')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-amber-500/50 bg-amber-500/15 text-amber-300 font-black transition-all">
+      <button type="button" id="nav-bottom-censo" style="pointer-events: auto !important; touch-action: manipulation;" onclick="app.cambiarTab('censo')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-amber-500/50 bg-amber-500/15 text-amber-300 font-black transition-all">
         <span class="text-lg leading-none mb-1">🐓</span>
         <span class="text-[11px] sm:text-xs tracking-tight leading-tight">Mi Censo</span>
       </button>
 
       <!-- 2. ➕ Alta Rápida (#tab-alta / #tab-registro) -->
-      <button type="button" id="nav-bottom-alta" onclick="app.cambiarTab('alta')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
+      <button type="button" id="nav-bottom-alta" style="pointer-events: auto !important; touch-action: manipulation;" onclick="app.cambiarTab('alta')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
         <span class="text-lg leading-none mb-1">➕</span>
         <span class="text-[11px] sm:text-xs tracking-tight leading-tight">Alta Rápida</span>
       </button>
 
       <!-- 3. 🥚 Puesta & RFID (#tab-puesta) -->
-      <button type="button" id="nav-bottom-puesta" onclick="app.cambiarTab('puesta')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
+      <button type="button" id="nav-bottom-puesta" style="pointer-events: auto !important; touch-action: manipulation;" onclick="app.cambiarTab('puesta')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
         <span class="text-lg leading-none mb-1">🥚</span>
         <span class="text-[11px] sm:text-xs tracking-tight leading-tight">Puesta &amp; RFID</span>
       </button>
 
       <!-- 4. ⚙️ Herramientas (#tab-herramientas) -->
-      <button type="button" id="nav-bottom-herramientas" onclick="app.cambiarTab('herramientas')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
+      <button type="button" id="nav-bottom-herramientas" style="pointer-events: auto !important; touch-action: manipulation;" onclick="app.cambiarTab('herramientas')" class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all">
         <span class="text-lg leading-none mb-1">⚙️</span>
         <span class="text-[11px] sm:text-xs tracking-tight leading-tight">Herramientas</span>
       </button>
@@ -5397,13 +5440,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="./pdf-engine.js?v=6.3.0"></script>
-  <script src="./app.js?v=6.3.0"></script>
+  <script src="./pdf-engine.js?v=6.2.0"></script>
+  <script src="./app.js?v=6.2.0"></script>
   <script>
     // Registro del Service Worker PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=6.3.0')
+        navigator.serviceWorker.register('./sw.js?v=6.2.0')
           .then((reg) => console.log('[PWA] Service Worker registrado:', reg.scope))
           .catch((err) => console.warn('[PWA] Error en Service Worker:', err));
       });

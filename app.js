@@ -8866,12 +8866,55 @@ const app = {
     const modal = document.getElementById('modal-auth-acceso');
     if (!modal) return;
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    modal.style.pointerEvents = 'auto';
     this.cambiarTabModalAuth(tab);
   },
 
   cerrarModalAuthAcceso() {
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
     const modal = document.getElementById('modal-auth-acceso');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+      modal.style.pointerEvents = 'none';
+    }
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = 'auto';
+    const navBar = document.getElementById('barra-inferior-navegacion');
+    if (navBar) {
+      navBar.style.zIndex = '99999';
+      navBar.style.pointerEvents = 'auto';
+    }
+  },
+
+  // Alias requeridos para desbloqueo de estado y actualización integral de UI tras login/registro
+  iniciarSesion(event) {
+    return this.iniciarSesionUsuario(event);
+  },
+
+  completarRegistro(event) {
+    return this.registrarNuevoUsuario(event);
+  },
+
+  actualizarUI() {
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
+    this.cerrarModalAuthAcceso();
+    this.poblarSelectores();
+    this.actualizarBadgeAviario();
+    this.actualizarVistaRegistroAviario();
+    this.actualizarPastillaUsuario();
+    this.aplicarPermisosRBAC();
+    this.renderizarCenso();
+    this.actualizarKPIs();
+    this.renderizarLotes();
+    this.poblarSelectoresAnaliticaPuesta();
+    this.renderizarAnaliticaPuesta();
+    this.renderizarTablaHistorialPuesta();
+    this.poblarSelectoresInSitu();
+    this.renderizarHistorialActasInSitu();
+    this.renderizarSolicitudesInspeccion();
+    this.renderizarTablaUsuariosAdmin();
   },
 
   cambiarTabModalAuth(tab = 'login') {
@@ -8963,7 +9006,12 @@ const app = {
       usuarioAutenticado = encontrado;
     }
 
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
+    window.usuarioActual = usuarioAutenticado;
+    this.usuarioActual = usuarioAutenticado;
     await this.activarSesionUsuario(usuarioAutenticado, recordar);
+    this.actualizarUI();
+    this.cambiarTab('censo');
     this.mostrarNotificacionToast(`🔐 Sesión iniciada: ${usuarioAutenticado.nombre || usuarioAutenticado.email}`, 'success');
   },
 
@@ -9071,8 +9119,15 @@ const app = {
     // Sincronizar con Supabase o encolar en SyncQueue
     await this.sincronizarPerfilUsuarioSupabase(nuevoUsuario, 'USUARIO_PERFIL');
 
+    // Eliminar físicamente cualquier backdrop o capa bloqueante y asignar usuarioActual inmediatamente
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
+    window.usuarioActual = nuevoUsuario;
+    this.usuarioActual = nuevoUsuario;
+
     // Activar sesión inmediatamente (filtrando y aislando todos los almacenes de IndexedDB para este nuevo usuario)
     await this.activarSesionUsuario(nuevoUsuario, true);
+    this.actualizarUI();
+    this.cambiarTab('censo');
 
     this.mostrarNotificacionToast(`🟡 Cuenta creada como Aspirante (NS-000): ${nombre}`, 'info');
   },
@@ -9083,20 +9138,26 @@ const app = {
   },
 
   // Activar sesión de usuario en estado, aislar sus datos en IndexedDB y sobreescribir app.estado.aviario dinámicamente
-  async activarSesionUsuario(usuario, persistir = true) {
-    if (!usuario) return;
+  async activarSesionUsuario(datosUsuario, persistir = true) {
+    if (!datosUsuario) return;
+
+    // Eliminar físicamente del DOM cualquier capa transparente o backdrop que quede bloqueando la pantalla
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
 
     // 1. Asegurar sincronización con IndexedDB para este ID de usuario
     const todosUsuariosDB = await this.db.getAll('usuarios');
     const enDB = (todosUsuariosDB || []).find(
-      u => u.id === usuario.id || (u.email && usuario.email && u.email.toLowerCase() === usuario.email.toLowerCase())
+      u => u.id === datosUsuario.id || (u.email && datosUsuario.email && u.email.toLowerCase() === datosUsuario.email.toLowerCase())
     );
-    const usuarioFinal = enDB ? { ...enDB, ...usuario } : usuario;
+    const usuarioFinal = enDB ? { ...enDB, ...datosUsuario } : datosUsuario;
 
     // 2. Reiniciar estado en memoria antes de hidratar la nueva cuenta para evitar contaminación entre sesiones
     this.estado = {};
     Object.assign(this.estado, this.obtenerEstadoInicialLimpio());
 
+    // Asignar en memoria usuarioActual = datosUsuario inmediatamente
+    window.usuarioActual = usuarioFinal;
+    this.usuarioActual = usuarioFinal;
     this.estado.usuarioActivo = usuarioFinal;
     this.estado.usuarioActual = usuarioFinal;
     this.estado.modoVisitante = false;
@@ -9116,37 +9177,16 @@ const app = {
     // 4. Sincronizar datos dinámicos del Inspector en las vistas de calificación y actas
     this.sincronizarInputsInspectorAutenticado();
 
-    // 5. Actualizar interfaz completa con los datos aislados del usuario activo
-    this.cerrarModalAuthAcceso();
-    this.poblarSelectores();
-    this.actualizarBadgeAviario();
-    this.actualizarVistaRegistroAviario();
-    this.actualizarPastillaUsuario();
-    this.aplicarPermisosRBAC();
-    this.renderizarCenso();
-    this.actualizarKPIs();
-    this.renderizarLotes();
-    this.poblarSelectoresAnaliticaPuesta();
-    this.renderizarAnaliticaPuesta();
-    this.renderizarTablaHistorialPuesta();
-    this.poblarSelectoresInSitu();
-    this.renderizarHistorialActasInSitu();
-    this.renderizarSolicitudesInspeccion();
-    this.renderizarTablaUsuariosAdmin();
-
-    // Redirigir a la vista más adecuada según el rol
-    const rol = this.obtenerRolUsuarioActual();
-    if (rol === 'administrador') {
-      this.cambiarTab('admin');
-    } else if (rol === 'inspector') {
-      this.cambiarTab('inspeccion-insitu');
-    } else {
-      this.cambiarTab('censo');
-    }
+    // 5. Actualizar interfaz completa y forzar navegación a Mi Censo ('censo')
+    this.actualizarUI();
+    this.cambiarTab('censo');
   },
 
   // [ Entrar como Visitante ]: Acceso de solo lectura al Estándar Racial ESGA025, Guía de Campo y Censo Público
   async entrarComoVisitante() {
+    document.querySelectorAll('.backdrop, .modal-backdrop').forEach(el => el.remove());
+    window.usuarioActual = null;
+    this.usuarioActual = null;
     this.estado = {};
     Object.assign(this.estado, this.obtenerEstadoInicialLimpio());
     this.estado.modoVisitante = true;
@@ -9163,16 +9203,7 @@ const app = {
 
     this.cerrarModalAuthAcceso();
     this.cerrarMenuMiCuenta();
-    this.poblarSelectores();
-    this.actualizarBadgeAviario();
-    this.actualizarVistaRegistroAviario();
-    this.actualizarPastillaUsuario();
-    this.aplicarPermisosRBAC();
-    this.renderizarCenso();
-    this.actualizarKPIs();
-    this.renderizarLotes();
-    this.poblarSelectoresAnaliticaPuesta();
-    this.renderizarAnaliticaPuesta();
+    this.actualizarUI();
     this.cambiarTab('censo');
 
     this.mostrarNotificacionToast('👤 Visitante (Modo Lectura): Censo Público, Pedigrí y Guía ESGA025', 'info');
@@ -9284,15 +9315,16 @@ const app = {
     const boxAccionesAuth = document.getElementById('dropdown-acciones-autenticado');
     const boxAccionesVis = document.getElementById('dropdown-acciones-visitante');
 
-    // CASO 1: Sin sesión activa o en Modo Visitante -> Estado "👤 Visitante (Modo Lectura)" / "Sin Sesión / Visitante"
+    // CASO 1: Sin sesión activa o en Modo Visitante -> Estado "👤 Visitante" / "Sin Sesión / Visitante"
     if (!u || rol === 'visitante') {
       if (avatarInicialesEl) {
         avatarInicialesEl.textContent = '👤';
-        avatarInicialesEl.className = 'h-7 w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-xs flex items-center justify-center shadow-inner shrink-0';
+        avatarInicialesEl.className = 'h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-[10px] sm:text-xs flex items-center justify-center shadow-inner shrink-0';
       }
       if (nombreDisplayEl) {
-        nombreDisplayEl.textContent = '👤 Visitante (Modo Lectura)';
+        nombreDisplayEl.textContent = 'Visitante';
         nombreDisplayEl.className = 'block text-[11px] sm:text-xs font-bold text-slate-200 truncate';
+        nombreDisplayEl.style.maxWidth = '110px';
       }
       if (rolDisplayEl) {
         rolDisplayEl.textContent = 'Sin Sesión / Visitante';
@@ -9303,7 +9335,7 @@ const app = {
         regaDisplayEl.classList.add('hidden');
       }
       if (pillBtn) {
-        pillBtn.className = 'flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group';
+        pillBtn.className = 'flex items-center gap-1.5 pl-1 pr-2 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[155px] sm:max-w-[260px]';
       }
 
       // Limpiar y restaurar el menú desplegable a estado Visitante
@@ -9381,11 +9413,12 @@ const app = {
       avatarInicialesEl.className = claseAvatar;
     }
 
-    // 2. Nombre a Mostrar (#user-nombre-display)
+    // 2. Nombre a Mostrar (#user-nombre-display) truncado limpio sin texto secundario ni REGA desbordante en móvil
     if (nombreDisplayEl) {
-      nombreDisplayEl.textContent = `${iconoEstado} ${nombreCorto} - ${regaMostrar}`;
-      nombreDisplayEl.title = `${nombreReal} (${emailReal})`;
+      nombreDisplayEl.textContent = `${iconoEstado} ${nombreCorto}`;
+      nombreDisplayEl.title = `${nombreReal} (${emailReal}) · REGA: ${regaMostrar}`;
       nombreDisplayEl.className = 'block text-[11px] sm:text-xs font-bold text-white truncate';
+      nombreDisplayEl.style.maxWidth = '110px';
     }
 
     // 3. Badge de Rol y Estado (#user-rol-display)
@@ -9406,7 +9439,7 @@ const app = {
     }
 
     if (pillBtn) {
-      pillBtn.className = `flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border ${clasePillBorder} transition shadow-md group`;
+      pillBtn.className = `flex items-center gap-1.5 pl-1 pr-2 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border ${clasePillBorder} transition shadow-md group max-w-[155px] sm:max-w-[260px]`;
     }
 
     // 5. Actualizar elementos del menú desplegable "Mi Cuenta" (#dropdown-mi-cuenta)
@@ -13038,6 +13071,13 @@ const app = {
     window.print();
   }
 };
+
+// Exponer funciones globales de navegación, sesión y desbloqueo de interfaz
+window.usuarioActual = null;
+window.cambiarTab = (tabName) => app.cambiarTab(tabName);
+window.actualizarUI = () => app.actualizarUI();
+window.iniciarSesion = (event) => app.iniciarSesion(event);
+window.completarRegistro = (event) => app.completarRegistro(event);
 
 // Iniciar aplicación al cargar el DOM
 window.addEventListener('DOMContentLoaded', () => {
