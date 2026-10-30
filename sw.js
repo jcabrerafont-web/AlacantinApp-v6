@@ -3,8 +3,8 @@
 // Club Gallina Alacantina (ESGA025)
 // ============================================================================
 
-const CACHE_NAME = 'alacantinapp-v6-static-v4';
-const DYNAMIC_CACHE = 'alacantinapp-v6-dynamic-v4';
+const CACHE_NAME = 'alacantinapp-v6-static-v5';
+const DYNAMIC_CACHE = 'alacantinapp-v6-dynamic-v5';
 
 // Recursos estáticos nucleares que se precachean
 const STATIC_ASSETS = [

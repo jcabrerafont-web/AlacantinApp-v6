@@ -44,7 +44,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Estilos Personalizados Complementarios -->
-  <link rel="stylesheet" href="./styles.css?v=6.2.0">
+  <link rel="stylesheet" href="./styles.css?v=6.3.0">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -62,138 +62,42 @@
       pointer-events: auto !important;
       touch-action: manipulation;
     }
-
-    /* 1. COMPORTAMIENTO EN ORDENADOR / ESCRITORIO (@media min-width: 641px): 1 SOLA FILA HORIZONTAL */
-    @media (min-width: 641px) {
-      #header {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-        max-width: 100vw !important;
-        padding: 10px 24px !important;
-        gap: 16px !important;
-        box-sizing: border-box !important;
-      }
-      #header-top-row {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        width: auto !important;
-        flex-shrink: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      #header-bottom-row {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        flex: 1 1 auto !important;
-        width: auto !important;
-        gap: 12px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        background: transparent !important;
-      }
-      #header-busqueda-mobile-wrapper {
-        flex: 1 1 260px !important;
-        max-width: 380px !important;
-        min-width: 180px !important;
-      }
-      #badge-esga025 {
-        display: inline-flex !important;
-      }
-    }
-
-    /* 2. COMPORTAMIENTO EXCLUSIVO EN MÓVILES (@media max-width: 640px): 2 FILAS APILADAS */
-    @media (max-width: 640px) {
-      #badge-esga025 {
-        display: none !important;
-      }
-      #header {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 6px !important;
-        width: 100% !important;
-        max-width: 100vw !important;
-        box-sizing: border-box !important;
-        padding: 8px 12px !important;
-      }
-      #header-top-row {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      #header-bottom-row {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        width: 100% !important;
-        gap: 8px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        background: transparent !important;
-      }
-      #header-busqueda-mobile-wrapper {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-      }
-      #header-busqueda-rapida-anilla-mobile {
-        width: 100% !important;
-        min-width: 0 !important;
-      }
-      #header-usuario,
-      #user-nombre-display {
-        max-width: 105px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-      }
-    }
   </style>
 </head>
 <body id="app" class="min-h-full flex flex-col bg-slate-950 font-sans antialiased text-slate-200">
 
-  <!-- ========================================================================= -->
-  <!-- CABECERA OFICIAL: 1 FILA EN ESCRITORIO (>=641px) | 2 FILAS EN MÓVIL (<=640px) -->
-  <!-- ========================================================================= -->
-  <header id="header" class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40 w-full max-w-full box-border">
-    <!-- Banner de aviso offline si no hay red (oculto salvo desconexión) -->
-    <div id="offline-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-amber-600 text-slate-950 px-3 py-1 text-[11px] font-semibold text-center items-center justify-center gap-1.5">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <span class="truncate">MODO OFFLINE ACTIVO: Guardado local en IndexedDB (SyncQueue).</span>
-    </div>
+  <!-- Banner de aviso offline si no hay red (oculto salvo desconexión) -->
+  <div id="offline-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-amber-600 text-slate-950 px-3 py-1 text-[11px] font-semibold text-center items-center justify-center gap-1.5">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span class="truncate">MODO OFFLINE ACTIVO: Guardado local en IndexedDB (SyncQueue).</span>
+  </div>
 
-    <!-- FILA 1 EN MÓVIL / BLOQUE IZQUIERDO EN ESCRITORIO (#header-top-row): Logo + Título "AlacantinApp v6" + Badge ESGA025 (solo escritorio) -->
-    <div id="header-top-row" class="flex items-center gap-2.5 shrink-0 min-w-0">
-      <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md shrink-0">
-      <div class="min-w-0">
-        <div class="flex items-center gap-2">
-          <h1 class="text-sm sm:text-lg font-bold text-white tracking-tight whitespace-nowrap">AlacantinApp <span class="text-amber-400 font-extrabold">v6</span></h1>
-          <span id="badge-esga025" class="esga-badge-static items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            ESGA025
-          </span>
+  <!-- ========================================================================= -->
+  <!-- CABECERA OFICIAL TAILWIND MOBILE-FIRST: 2 FILAS EN MÓVIL | 1 FILA DESKTOP -->
+  <!-- ========================================================================= -->
+  <header id="header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-6 sm:py-2.5 w-full bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-40 box-border">
+    <!-- FILA 1 EN MÓVIL / IZQUIERDA EN ESCRITORIO: Logo + Título + Badge ESGA025 (oculto en móvil) -->
+    <div id="header-top-row" class="flex items-center justify-between sm:justify-start gap-2.5 w-full sm:w-auto shrink-0 min-w-0">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <img src="./icons/logo.png" onerror="this.src='./icons/icon-192.png'" alt="Club Gallina Alacantina" class="h-8 w-8 sm:h-10 sm:w-10 rounded-lg border border-amber-500/40 p-0.5 object-cover bg-slate-950 shadow-md shrink-0">
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-lg font-bold text-white tracking-tight whitespace-nowrap">
+            AlacantinApp <span class="text-amber-400 font-extrabold">v6</span>
+          </h1>
+          <p class="text-[11px] text-slate-400 hidden xl:block truncate">
+            Libro Genealógico Oficial · Protocolo CNZ (5 junio 2025) · RD 45/2019
+          </p>
         </div>
-        <p class="text-[11px] text-slate-400 hidden xl:block truncate">
-          Libro Genealógico Oficial · Protocolo CNZ (5 junio 2025) · RD 45/2019
-        </p>
       </div>
+      <span id="badge-esga025" class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+        ESGA025
+      </span>
     </div>
 
-    <!-- FILA 2 EN MÓVIL / BLOQUE CENTRAL-DERECHO EN ESCRITORIO (#header-bottom-row): Buscador + Usuario + Botón Salir -->
-    <div id="header-bottom-row" class="flex items-center justify-between sm:justify-end gap-2 relative">
-      <!-- Buscador rápido de anilla unificado (Móvil + Escritorio) -->
-      <div id="header-busqueda-mobile-wrapper" class="relative flex-1 min-w-0">
+    <!-- FILA 2 EN MÓVIL / DERECHA EN ESCRITORIO: Buscador + Usuario + Botón Salir -->
+    <div id="header-bottom-row" class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto sm:flex-1 min-w-0 relative">
+      <!-- Buscador rápido de anilla -->
+      <div id="header-busqueda-mobile-wrapper" class="relative flex-1 sm:max-w-xs min-w-0">
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 text-xs pointer-events-none"></i>
         <input type="search"
                id="header-busqueda-rapida-anilla-mobile"
@@ -269,15 +173,15 @@
                 id="user-avatar-pill"
                 onclick="app.toggleMenuMiCuenta(event)"
                 title="Mi Cuenta · Ver perfil, actualizar REGA, cambiar contraseña o cerrar sesión"
-                class="flex items-center gap-1.5 pl-1 pr-2.5 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[150px] sm:max-w-[240px]">
+                class="flex items-center gap-1.5 pl-1 pr-2.5 sm:pl-1.5 sm:pr-3 py-1 rounded-full bg-slate-800/95 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 transition shadow-md group max-w-[145px] sm:max-w-[240px]">
           <span id="user-avatar-iniciales" class="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-slate-800 border border-slate-600 text-slate-300 font-black text-[10px] sm:text-xs flex items-center justify-center shadow-inner shrink-0">
             👤
           </span>
-          <div id="header-usuario" class="text-left min-w-0 max-w-[105px] sm:max-w-[180px] overflow-hidden">
-            <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate" style="max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <div id="header-usuario" class="text-left min-w-0 max-w-[95px] sm:max-w-[180px] overflow-hidden">
+            <span id="user-nombre-display" class="block text-[11px] sm:text-xs font-bold text-white truncate">
               Visitante
             </span>
-            <div class="hidden sm:flex items-center gap-1.5 leading-none mt-0.5 header-secondary-text-mobile">
+            <div class="hidden sm:flex items-center gap-1.5 leading-none mt-0.5">
               <span id="user-rol-display" class="text-[9px] font-mono text-slate-400 truncate">
                 Sin Sesión / Visitante
               </span>
