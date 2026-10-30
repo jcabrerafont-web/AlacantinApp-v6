@@ -1449,12 +1449,14 @@ const app = {
 
     const sexo = document.getElementById('alta-sexo').value;
     const anilla = document.getElementById('alta-anilla').value.trim();
-    const codigoId = document.getElementById('alta-codigo-id').value.trim();
-    const nombre = document.getElementById('alta-nombre').value.trim();
     const fechaNac = document.getElementById('alta-fecha-nac').value;
+    const anioStr = fechaNac ? fechaNac.slice(2, 4) : String(new Date().getFullYear()).slice(2, 4);
+    const letraSexo = sexo === 'Macho' ? 'M' : 'H';
+    const codigoId = (document.getElementById('alta-codigo-id')?.value || '').trim() || `ESGA025-${anioStr}-${letraSexo}-${anilla.padStart(4, '0')}`;
+    const nombre = (document.getElementById('alta-nombre')?.value || '').trim();
     const variedad = document.getElementById('alta-variedad').value;
-    const seccion = document.getElementById('alta-seccion').value;
-    const familia = document.getElementById('alta-familia').value;
+    const seccion = document.getElementById('alta-seccion')?.value || 'RN';
+    const familia = document.getElementById('alta-familia')?.value || 'Familia A';
     const padreId = document.getElementById('alta-padre').value || null;
     const madreId = document.getElementById('alta-madre').value || null;
     const pesoRaw = parseFloat(document.getElementById('alta-peso')?.value);
@@ -1571,6 +1573,10 @@ const app = {
   limpiarFormularioAlta() {
     document.getElementById('form-alta-animal').reset();
     document.getElementById('alta-fecha-nac').valueAsDate = new Date();
+    const elSeccion = document.getElementById('alta-seccion');
+    if (elSeccion) elSeccion.value = 'RN';
+    const detailsOpc = document.getElementById('details-alta-opcionales');
+    if (detailsOpc) detailsOpc.open = false;
     const elRfid = document.getElementById('alta-rfid');
     if (elRfid) elRfid.value = '';
     this.estado.gpsUbicacion = null;
