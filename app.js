@@ -5252,6 +5252,12 @@ const app = {
 
     Object.entries(mapaBotonesInferiores).forEach(([clave, btn]) => {
       if (!btn) return;
+      if (clave === 'alta' && rolActual === 'visitante') {
+        btn.className = 'bottom-nav-btn hidden flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all';
+        btn.style.setProperty('display', 'none', 'important');
+        return;
+      }
+      btn.style.removeProperty('display');
       if (clave === botonNivel1Activo) {
         btn.className = 'bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-amber-500/60 bg-amber-500/15 text-amber-300 font-black shadow-inner transition-all';
       } else {
@@ -9995,6 +10001,7 @@ const app = {
     const puedeExportarOficial = this.esRolAutorizadoExportacionesOficiales(rol);
 
     const btnTabRegistro = document.getElementById('tab-btn-registro');
+    const btnNavBottomAlta = document.getElementById('nav-bottom-alta');
     const btnTabLotes = document.getElementById('tab-btn-lotes');
     const btnTabInSitu = document.getElementById('tab-btn-inspeccion-insitu');
     const btnTabAdmin = document.getElementById('tab-btn-admin');
@@ -10122,11 +10129,35 @@ const app = {
     }
 
     // 7. Visibilidad de pestañas de escritura vs solo lectura (Visitante)
+    const tabRegistroSection = document.getElementById('tab-registro');
+    const navBottomGrid = document.querySelector('#barra-inferior-navegacion > div');
     if (rol === 'visitante') {
-      btnTabRegistro?.classList.add('opacity-50');
+      setVisibilidadEstricta(btnNavBottomAlta, false);
+      setVisibilidadEstricta(btnTabRegistro, false);
+      if (navBottomGrid) {
+        navBottomGrid.classList.remove('grid-cols-4');
+        navBottomGrid.classList.add('grid-cols-3');
+      }
+      if (tabRegistroSection) {
+        tabRegistroSection.classList.remove('active');
+        tabRegistroSection.classList.add('hidden');
+        const tabCensoSection = document.getElementById('tab-censo');
+        if (tabCensoSection && !document.querySelector('.tab-content.active')) {
+          tabCensoSection.classList.add('active');
+        }
+      }
       btnTabLotes?.classList.add('opacity-50');
       fichaAviarioCenso?.classList.add('hidden');
     } else {
+      setVisibilidadEstricta(btnNavBottomAlta, true, 'flex');
+      setVisibilidadEstricta(btnTabRegistro, true);
+      if (navBottomGrid) {
+        navBottomGrid.classList.remove('grid-cols-3');
+        navBottomGrid.classList.add('grid-cols-4');
+      }
+      if (tabRegistroSection) {
+        tabRegistroSection.classList.remove('hidden');
+      }
       btnTabRegistro?.classList.remove('opacity-50');
       btnTabLotes?.classList.remove('opacity-50');
       fichaAviarioCenso?.classList.remove('hidden');
