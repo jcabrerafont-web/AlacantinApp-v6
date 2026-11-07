@@ -889,8 +889,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-2 shrink-0">
           <button type="button"
+                  id="btn-censo-auditoria-integridad"
+                  style="display: none !important;"
                   onclick="app.togglePanelAuditoriaCenso()"
-                  class="px-3.5 py-2.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-md transition">
+                  class="hidden px-3.5 py-2.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-md transition">
             <span>🔍 Auditoría de Integridad</span>
             <span id="badge-censo-auditoria-count" class="px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 font-black text-[10px]">0</span>
           </button>
@@ -959,8 +961,10 @@
 
       <!-- =================================================================== -->
       <!-- FASE 6: 🔍 AUDITORÍA DE INTEGRIDAD DEL LIBRO GENEALÓGICO (CENSO)    -->
+      <!-- Exclusivo para Inspector Zootécnico y Administrador (RBAC V6)       -->
       <!-- =================================================================== -->
-      <div id="panel-auditoria-censo" class="bg-slate-900 border-2 border-amber-500/40 rounded-xl p-4 sm:p-5 shadow-xl space-y-4">
+      <div id="panel-auditoria-integridad" style="display: none !important;" class="hidden">
+      <div id="panel-auditoria-censo" style="display: none !important;" class="hidden bg-slate-900 border-2 border-amber-500/40 rounded-xl p-4 sm:p-5 shadow-xl space-y-4">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div class="flex items-start sm:items-center gap-3">
             <div class="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-lg shrink-0">
@@ -1067,6 +1071,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <!-- Filtros y Búsqueda Avanzada del Censo -->
       <div id="seccion-censo" class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xl space-y-3">
@@ -1128,11 +1133,11 @@
             </select>
 
             <!-- Menú Desplegable: Exportaciones Oficiales Zootécnicas (MAPA / ARCA / DAD-IS / Pedigrí) -->
-            <div class="relative inline-block text-left" id="dropdown-exportaciones-oficiales">
+            <div class="relative inline-block text-left hidden" id="dropdown-exportaciones-oficiales" style="display: none !important;">
               <button type="button" 
                       onclick="app.toggleDropdownExportaciones()" 
                       id="btn-dropdown-exportaciones" 
-                      class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600/30 to-amber-500/20 hover:from-amber-600/40 hover:to-amber-500/30 border border-amber-500/50 text-amber-300 hover:text-white text-xs font-bold flex items-center gap-2 shadow-sm transition"
+                      class="btn-exportar-arca px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-600/30 to-amber-500/20 hover:from-amber-600/40 hover:to-amber-500/30 border border-amber-500/50 text-amber-300 hover:text-white text-xs font-bold flex items-center gap-2 shadow-sm transition"
                       aria-haspopup="true"
                       aria-expanded="false"
                       title="Exportaciones Oficiales Zootécnicas (RD 45/2019, Reg. UE 2016/1012, FAO DAD-IS)">
@@ -1184,7 +1189,7 @@
                   <!-- 1. ARCA / e-Zootecnia (CSV) -->
                   <button type="button" 
                           onclick="app.exportarFormatoARCA()" 
-                          class="w-full text-left p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/50 transition group flex flex-col gap-0.5">
+                          class="btn-exportar-arca w-full text-left p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/50 transition group flex flex-col gap-0.5">
                     <div class="flex items-center justify-between">
                       <span class="text-xs font-bold text-amber-300 group-hover:text-amber-200 flex items-center gap-1.5">
                         <span>🇪🇸</span> Exportar Formato ARCA / e-Zootecnia (CSV)
@@ -1199,7 +1204,7 @@
                   <!-- 2. DAD-IS / FAO (JSON) -->
                   <button type="button" 
                           onclick="app.exportarInformeDADIS()" 
-                          class="w-full text-left p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 transition group flex flex-col gap-0.5">
+                          class="btn-exportar-arca w-full text-left p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 transition group flex flex-col gap-0.5">
                     <div class="flex items-center justify-between">
                       <span class="text-xs font-bold text-sky-300 group-hover:text-sky-200 flex items-center gap-1.5">
                         <span>🇺🇳</span> Exportar Informe Demográfico DAD-IS / FAO (JSON)
@@ -1319,7 +1324,7 @@
               <i class="fa-solid fa-book-open-reader"></i>
               <span>Guía 12 Regiones</span>
             </button>
-            <button type="button" onclick="app.abrirModoInspeccionInSituDesdeTab3()" class="px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition">
+            <button type="button" id="tab-btn-inspeccion-insitu" style="display: none !important;" onclick="app.abrirModoInspeccionInSituDesdeTab3()" class="hidden btn-modo-inspeccion-insitu px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition">
               <span>📋 Modo Inspección In Situ</span>
               <i class="fa-solid fa-arrow-right"></i>
             </button>
@@ -1505,12 +1510,16 @@
             </span>
           </div>
 
-          <div class="w-full md:w-auto flex items-center gap-2">
+          <div class="w-full md:w-auto flex flex-wrap items-center gap-2">
             <input type="text" id="inspeccion-calificador" placeholder="Inspector / Calificador autenticado" value="" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
-            <button onclick="app.guardarInspeccion()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition">
+            <button id="btn-guardar-calificacion-100p" style="display: none !important;" disabled onclick="app.guardarInspeccion()" class="hidden px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition">
               <i class="fa-solid fa-check"></i>
               <span>Guardar Calificación</span>
             </button>
+            <span id="badge-calificacion-solo-lectura" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-amber-500/40 text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
+              <i class="fa-solid fa-lock text-amber-400"></i>
+              <span>Modo Consulta (Guardado exclusivo Inspector / Admin)</span>
+            </span>
           </div>
         </div>
       </div>
@@ -2751,7 +2760,7 @@
         <!-- ================================================================= -->
         <!-- PANEL V6: SOLICITUDES DE INSPECCIÓN PENDIENTES (TELÉFONO/WHATSAPP)-->
         <!-- ================================================================= -->
-        <div id="panel-solicitudes-inspeccion-insitu" class="insitu-card bg-slate-950 border-2 border-amber-500/60 rounded-xl p-4 sm:p-5 space-y-3 shadow-xl">
+        <div id="panel-solicitudes-inspeccion-insitu" style="display: none !important;" class="hidden insitu-card bg-slate-950 border-2 border-amber-500/60 rounded-xl p-4 sm:p-5 space-y-3 shadow-xl">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
             <div class="flex items-center gap-2.5">
               <div class="h-9 w-9 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-base shrink-0">
@@ -4022,9 +4031,9 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-5 pt-4 border-t border-slate-800/80">
-              <button type="button" onclick="app.cambiarTab('inspeccion-insitu')" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition">
+              <button type="button" id="btn-herramientas-inspeccion-insitu" style="display: none !important;" onclick="app.cambiarTab('inspeccion-insitu')" class="hidden btn-modo-inspeccion-insitu py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition">
                 <i class="fa-solid fa-clipboard-check"></i>
-                <span>Inspección 12 Regiones &amp; Actas</span>
+                <span>📋 Modo Inspección In Situ</span>
               </button>
               <button type="button" onclick="app.cambiarTab('inspeccion')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center justify-center gap-2 transition">
                 <i class="fa-solid fa-scale-balanced"></i>
@@ -5392,13 +5401,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="./pdf-engine.js?v=6.2.0"></script>
-  <script src="./app.js?v=6.2.0"></script>
+  <script src="./pdf-engine.js?v=6.3.1"></script>
+  <script src="./app.js?v=6.3.1"></script>
   <script>
     // Registro del Service Worker PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=6.2.0')
+        navigator.serviceWorker.register('./sw.js?v=6.3.1')
           .then((reg) => console.log('[PWA] Service Worker registrado:', reg.scope))
           .catch((err) => console.warn('[PWA] Error en Service Worker:', err));
       });

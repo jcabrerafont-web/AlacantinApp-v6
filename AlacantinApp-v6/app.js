@@ -1831,8 +1831,9 @@ const app = {
 
     const filtrados = this.obtenerAnimalesFiltrados();
     this.actualizarConteoExportacion();
+    this.aplicarPermisosRBAC();
 
-    if (typeof this.actualizarPanelAuditoriaCenso === 'function' && this.estado.auditoria?.panelAbierto) {
+    if (typeof this.actualizarPanelAuditoriaCenso === 'function' && this.estado.auditoria?.panelAbierto && this.esRolInspectorOAdmin()) {
       this.actualizarPanelAuditoriaCenso();
     }
 
@@ -2188,6 +2189,7 @@ const app = {
     });
 
     this.recalcularBaremo();
+    this.aplicarPermisosRBAC();
   },
 
   recalcularBaremo() {
@@ -2252,6 +2254,11 @@ const app = {
   },
 
   async guardarInspeccion() {
+    if (!this.esRolInspectorOAdmin()) {
+      this.mostrarNotificacionToast('🔒 Acceso restringido: Solo un Inspector Zootécnico o Administrador puede guardar calificaciones oficiales de 100p y promover ejemplares a RD/RM.', 'warning');
+      return;
+    }
+
     const animalId = document.getElementById('inspeccion-animal-select').value;
     if (!animalId) {
       alert('Por favor, selecciona un ejemplar para calificar.');
@@ -4344,6 +4351,12 @@ const app = {
   },
 
   toggleDropdownExportaciones() {
+    if (!this.esRolAutorizadoExportacionesOficiales()) {
+      this.cerrarDropdownExportaciones();
+      this.mostrarNotificacionToast('🔒 Las Exportaciones Oficiales (ARCA / DAD-IS) requieren sesión activa como Criador Oficial, Inspector Zootécnico o Administrador.', 'warning');
+      return;
+    }
+
     const menu = document.getElementById('menu-exportaciones-oficiales');
     const btn = document.getElementById('btn-dropdown-exportaciones');
     const chevron = document.getElementById('icon-chevron-exportaciones');
@@ -4420,6 +4433,11 @@ const app = {
   //           puntuacion_100p, estado_reproductor, latitud_gps, longitud_gps
   // =========================================================================
   exportarFormatoARCA(soloFiltrados = null) {
+    if (!this.esRolAutorizadoExportacionesOficiales()) {
+      this.cerrarDropdownExportaciones();
+      this.mostrarNotificacionToast('🔒 Acceso restringido: Exportación oficial ARCA disponible solo para Criador Oficial, Inspector y Administrador.', 'warning');
+      return;
+    }
     const censo = this.obtenerAnimalesParaExportar(soloFiltrados);
     if (!censo || censo.length === 0) {
       alert('No hay ejemplares disponibles para exportar con los criterios seleccionados.');
@@ -4527,6 +4545,11 @@ const app = {
   //              Explotaciones REGA activas, Estimación Ne (Tamaño Efectivo), Fx medio
   // =========================================================================
   exportarInformeDADIS(soloFiltrados = null) {
+    if (!this.esRolAutorizadoExportacionesOficiales()) {
+      this.cerrarDropdownExportaciones();
+      this.mostrarNotificacionToast('🔒 Acceso restringido: Exportación oficial DAD-IS / FAO disponible solo para Criador Oficial, Inspector y Administrador.', 'warning');
+      return;
+    }
     const censo = this.obtenerAnimalesParaExportar(soloFiltrados);
     if (!censo || censo.length === 0) {
       alert('No hay ejemplares disponibles para generar el informe demográfico DAD-IS.');
@@ -5188,6 +5211,12 @@ const app = {
     if (tabName === 'admin' && rolActual !== 'administrador') {
       this.mostrarNotificacionToast('🔒 Acceso restringido: El Panel de Administración es exclusivo para usuarios con rol Administrador.', 'warning');
       return this.cambiarTab('herramientas');
+    }
+
+    // Protección RBAC estricta para Modo Inspección In Situ (Exclusivo Inspector Zootécnico y Administrador)
+    if (tabName === 'inspeccion-insitu' && !this.esRolInspectorOAdmin(rolActual)) {
+      this.mostrarNotificacionToast('🔒 Acceso restringido: El Modo Inspección In Situ es exclusivo para usuarios con rol Inspector Zootécnico o Administrador.', 'warning');
+      return this.cambiarTab('censo');
     }
 
     // Protección Modo Visitante (Solo lectura: Censo, Pedigrí, Herramientas y Guía de Campo ESGA025)
@@ -7290,6 +7319,10 @@ const app = {
   },
 
   abrirModoInspeccionInSituDesdeTab3() {
+    if (!this.esRolInspectorOAdmin()) {
+      this.mostrarNotificacionToast('🔒 Acceso restringido: El Modo Inspección In Situ es exclusivo para Inspector Zootécnico o Administrador.', 'warning');
+      return;
+    }
     const animalTab3 = document.getElementById('inspeccion-animal-select')?.value;
     this.cambiarTab('inspeccion-insitu');
     if (animalTab3) {
@@ -7958,12 +7991,10 @@ const app = {
   // GENERACIÓN DEL ACTA OFICIAL Y DISPARO DE promover_ejemplar_inspeccion()
   // =========================================================================
   async guardarActaInspeccionInSitu() {
-    // Verificar rol RBAC
-    if (this.estado.inspeccionInSitu.rolRBAC === 'criador' || this.estado.inspeccionInSitu.rolRBAC === 'aspirante') {
-      if (!confirm('Estás en el rol de Criador/Aspirante. La emisión de Actas Oficiales corresponde al Inspector Zootécnico CNZ.\n¿Deseas conmutar automáticamente al modo Inspector y emitir el acta con tus datos de sesión?')) {
-        return;
-      }
-      this.cambiarRolRBAC('inspector');
+    // Verificar rol RBAC estricto (Solo Inspector Zootécnico o Administrador)
+    if (!this.esRolInspectorOAdmin()) {
+      this.mostrarNotificacionToast('🔒 Acceso restringido: La emisión de Actas Oficiales de Inspección corresponde exclusivamente a Inspector Zootécnico o Administrador.', 'warning');
+      return;
     }
 
     const animalId = this.estado.inspeccionInSitu.animalActualId || document.getElementById('insitu-animal-select')?.value;
@@ -9933,8 +9964,35 @@ const app = {
   // -------------------------------------------------------------------------
   // 12.4. CONTROL DE ACCESO POR ROLES (RBAC) EN LA INTERFAZ
   // -------------------------------------------------------------------------
+  esRolInspectorOAdmin(rolInput = null) {
+    const u = this.estado.usuarioActivo || this.estado.usuarioActual;
+    if (this.estado.modoVisitante || !u) return false;
+    const r = (rolInput || this.obtenerRolUsuarioActual() || '').toString().trim().toLowerCase();
+    return (
+      r === 'inspector' ||
+      r === 'inspector zootécnico' ||
+      r === 'inspector zootecnico' ||
+      r === 'administrador' ||
+      r === 'admin'
+    );
+  },
+
+  esRolAutorizadoExportacionesOficiales(rolInput = null) {
+    const u = this.estado.usuarioActivo || this.estado.usuarioActual;
+    if (this.estado.modoVisitante || !u) return false;
+    const r = (rolInput || this.obtenerRolUsuarioActual() || '').toString().trim().toLowerCase();
+    if (r === 'visitante' || r === 'aspirante') return false;
+    return (
+      r === 'criador' ||
+      r === 'criador oficial' ||
+      this.esRolInspectorOAdmin(r)
+    );
+  },
+
   aplicarPermisosRBAC() {
     const rol = this.obtenerRolUsuarioActual();
+    const esInspectorOAdmin = this.esRolInspectorOAdmin(rol);
+    const puedeExportarOficial = this.esRolAutorizadoExportacionesOficiales(rol);
 
     const btnTabRegistro = document.getElementById('tab-btn-registro');
     const btnTabLotes = document.getElementById('tab-btn-lotes');
@@ -9946,7 +10004,98 @@ const app = {
     const panelSolicitudesInSitu = document.getElementById('panel-solicitudes-inspeccion-insitu');
     const fichaAviarioCenso = document.getElementById('censo-ficha-aviario-criador');
 
-    // 1. Pestaña exclusiva de Administración: SOLO visible para rol 'administrador'
+    // Helper estricto para aplicar o retirar 'display: none !important;'
+    const setVisibilidadEstricta = (el, visible, displayVisible = '') => {
+      if (!el) return;
+      if (visible) {
+        el.classList.remove('hidden');
+        if (displayVisible) {
+          el.style.setProperty('display', displayVisible, 'important');
+        } else {
+          el.style.removeProperty('display');
+        }
+      } else {
+        el.classList.add('hidden');
+        el.style.setProperty('display', 'none', 'important');
+      }
+    };
+
+    // 1. OCULTAR 'AUDITORÍA DE INTEGRIDAD' A VISITANTES Y CRIADORES
+    // En '#panel-auditoria-integridad' (y '#panel-auditoria-censo' / botón de acceso en Pestaña Censo),
+    // aplica 'display: none !important;' salvo que el usuario activo sea 'Inspector Zootécnico' o 'Administrador'.
+    const panelAuditoriaIntegridad = document.getElementById('panel-auditoria-integridad');
+    const panelAuditoriaCenso = document.getElementById('panel-auditoria-censo');
+    const panelAuditoriaAlt = document.getElementById('panel-auditoria-integridad-censo');
+    const btnAuditoriaCenso = document.getElementById('btn-censo-auditoria-integridad');
+
+    if (esInspectorOAdmin) {
+      setVisibilidadEstricta(panelAuditoriaIntegridad, true);
+      setVisibilidadEstricta(panelAuditoriaCenso, true);
+      setVisibilidadEstricta(panelAuditoriaAlt, true);
+      setVisibilidadEstricta(btnAuditoriaCenso, true);
+    } else {
+      setVisibilidadEstricta(panelAuditoriaIntegridad, false);
+      setVisibilidadEstricta(panelAuditoriaCenso, false);
+      setVisibilidadEstricta(panelAuditoriaAlt, false);
+      setVisibilidadEstricta(btnAuditoriaCenso, false);
+    }
+
+    // 2. OCULTAR 'EXPORTACIONES OFICIALES' (ARCA / DAD-IS) A VISITANTES
+    // En '#dropdown-exportaciones-oficiales' / '.btn-exportar-arca' (Pestaña Censo),
+    // oculta en Modo Visitante (sin sesión activa). Permitido solo para Criador Oficial, Inspector y Administrador.
+    const dropdownExportaciones = document.getElementById('dropdown-exportaciones-oficiales');
+    const btnDropdownExportaciones = document.getElementById('btn-dropdown-exportaciones');
+    const botonesExportarArca = document.querySelectorAll('.btn-exportar-arca');
+
+    if (puedeExportarOficial) {
+      setVisibilidadEstricta(dropdownExportaciones, true);
+      setVisibilidadEstricta(btnDropdownExportaciones, true);
+      botonesExportarArca.forEach(btn => setVisibilidadEstricta(btn, true));
+    } else {
+      setVisibilidadEstricta(dropdownExportaciones, false);
+      setVisibilidadEstricta(btnDropdownExportaciones, false);
+      botonesExportarArca.forEach(btn => setVisibilidadEstricta(btn, false));
+      this.cerrarDropdownExportaciones();
+    }
+
+    // 3. RESTRINGIR GUARDADO DE BAREMO 100P Y PROMOCIÓN A REGISTRO DEFINITIVO (RD)
+    // En #tab-inspeccion, deshabilita y oculta '#btn-guardar-calificacion-100p' si NO es Inspector ni Administrador.
+    const btnGuardarCalificacion100p = document.getElementById('btn-guardar-calificacion-100p');
+    const inputCalificador100p = document.getElementById('inspeccion-calificador');
+    const badgeCalificacionSoloLectura = document.getElementById('badge-calificacion-solo-lectura');
+
+    if (btnGuardarCalificacion100p) {
+      if (esInspectorOAdmin) {
+        btnGuardarCalificacion100p.disabled = false;
+        btnGuardarCalificacion100p.removeAttribute('disabled');
+        btnGuardarCalificacion100p.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+        btnGuardarCalificacion100p.style.removeProperty('display');
+      } else {
+        btnGuardarCalificacion100p.disabled = true;
+        btnGuardarCalificacion100p.setAttribute('disabled', 'true');
+        btnGuardarCalificacion100p.classList.add('hidden', 'opacity-50', 'pointer-events-none');
+        btnGuardarCalificacion100p.style.setProperty('display', 'none', 'important');
+      }
+    }
+    if (inputCalificador100p) {
+      inputCalificador100p.disabled = !esInspectorOAdmin;
+      inputCalificador100p.readOnly = !esInspectorOAdmin;
+    }
+    if (badgeCalificacionSoloLectura) {
+      setVisibilidadEstricta(badgeCalificacionSoloLectura, !esInspectorOAdmin);
+    }
+
+    // 4. RESTRINGIR ACCESO A MODO INSPECCIÓN IN SITU Y LISTA DE SOLICITUDES
+    // Muestra '#tab-btn-inspeccion-insitu', '.btn-modo-inspeccion-insitu' y '#panel-solicitudes-inspeccion-insitu'
+    // únicamente a usuarios con rol 'Inspector Zootécnico' o 'Administrador'.
+    const botonesModoInSitu = document.querySelectorAll('#tab-btn-inspeccion-insitu, #btn-herramientas-inspeccion-insitu, .btn-modo-inspeccion-insitu');
+    botonesModoInSitu.forEach(btn => {
+      setVisibilidadEstricta(btn, esInspectorOAdmin);
+    });
+    setVisibilidadEstricta(btnTabInSitu, esInspectorOAdmin);
+    setVisibilidadEstricta(panelSolicitudesInSitu, esInspectorOAdmin);
+
+    // 5. Pestaña exclusiva de Administración: SOLO visible para rol 'administrador'
     if (btnTabAdmin) {
       if (rol === 'administrador') {
         btnTabAdmin.classList.remove('hidden');
@@ -9955,7 +10104,7 @@ const app = {
       }
     }
 
-    // 2. Banners contextuales superiores según el rol activo
+    // 6. Banners contextuales superiores según el rol activo
     if (bannerAspirante) {
       if (rol === 'aspirante') {
         bannerAspirante.classList.remove('hidden');
@@ -9972,29 +10121,18 @@ const app = {
       }
     }
 
-    // 3. Visibilidad de pestañas de escritura vs solo lectura (Visitante)
+    // 7. Visibilidad de pestañas de escritura vs solo lectura (Visitante)
     if (rol === 'visitante') {
       btnTabRegistro?.classList.add('opacity-50');
       btnTabLotes?.classList.add('opacity-50');
-      btnTabInSitu?.classList.add('hidden');
       fichaAviarioCenso?.classList.add('hidden');
     } else {
       btnTabRegistro?.classList.remove('opacity-50');
       btnTabLotes?.classList.remove('opacity-50');
-      btnTabInSitu?.classList.remove('hidden');
       fichaAviarioCenso?.classList.remove('hidden');
     }
 
-    // 4. Panel de Solicitudes de Inspección Pendientes en Tab 6 (Visible para Inspector y Administrador)
-    if (panelSolicitudesInSitu) {
-      if (rol === 'inspector' || rol === 'administrador') {
-        panelSolicitudesInSitu.classList.remove('hidden');
-      } else {
-        panelSolicitudesInSitu.classList.add('hidden');
-      }
-    }
-
-    // 5. Actualizar badge de rol en Inspección In Situ
+    // 8. Actualizar badge de rol en Inspección In Situ
     this.actualizarBadgeRBACInSitu(rol);
   },
 
@@ -10490,10 +10628,28 @@ const app = {
 
   // Renderizar tarjetas de Solicitudes de Inspección Pendientes en Vista Inspector (Tab 6) y Vista Admin
   renderizarSolicitudesInspeccion() {
+    const panelSolicitudesInSitu = document.getElementById('panel-solicitudes-inspeccion-insitu');
+    const esInspectorOAdmin = this.esRolInspectorOAdmin();
+    if (panelSolicitudesInSitu) {
+      if (esInspectorOAdmin) {
+        panelSolicitudesInSitu.classList.remove('hidden');
+        panelSolicitudesInSitu.style.removeProperty('display');
+      } else {
+        panelSolicitudesInSitu.classList.add('hidden');
+        panelSolicitudesInSitu.style.setProperty('display', 'none', 'important');
+      }
+    }
+
     const gridInSitu = document.getElementById('grid-solicitudes-inspeccion-insitu');
     const gridAdmin = document.getElementById('grid-solicitudes-inspeccion-admin');
     const badgeCountInSitu = document.getElementById('badge-solicitudes-pendientes-count');
     const badgeNav = document.getElementById('badge-nav-solicitudes-pendientes');
+
+    if (!esInspectorOAdmin) {
+      if (gridInSitu) gridInSitu.innerHTML = '';
+      if (badgeNav) badgeNav.classList.add('hidden');
+      return;
+    }
 
     const todas = (this.estado.solicitudesInspeccion || []).slice().sort(
       (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
@@ -12694,6 +12850,20 @@ const app = {
   },
 
   renderizarPanelAuditoriaIntegridad() {
+    const esInspectorOAdmin = this.esRolInspectorOAdmin();
+    ['panel-auditoria-integridad', 'panel-auditoria-censo', 'panel-auditoria-integridad-censo', 'btn-censo-auditoria-integridad'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (esInspectorOAdmin) {
+        el.classList.remove('hidden');
+        el.style.removeProperty('display');
+      } else {
+        el.classList.add('hidden');
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
+    if (!esInspectorOAdmin) return;
+
     const alertas = this.estado.auditoria.alertas || [];
     const catActiva = this.estado.auditoria.categoriaActiva || 'TODAS';
 
@@ -12765,16 +12935,42 @@ const app = {
   },
 
   togglePanelAuditoriaCenso() {
+    if (!this.esRolInspectorOAdmin()) {
+      ['panel-auditoria-integridad', 'panel-auditoria-censo', 'panel-auditoria-integridad-censo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add('hidden');
+          el.style.setProperty('display', 'none', 'important');
+        }
+      });
+      this.mostrarNotificacionToast('🔒 Acceso restringido: La Auditoría de Integridad es exclusiva para Inspector Zootécnico y Administrador.', 'warning');
+      return;
+    }
+    const wrapper = document.getElementById('panel-auditoria-integridad');
     const panel = document.getElementById('panel-auditoria-censo') || document.getElementById('panel-auditoria-integridad-censo');
     if (!panel) return;
-    panel.classList.toggle('hidden');
-    if (!panel.classList.contains('hidden')) {
+    const ocultar = !panel.classList.contains('hidden');
+    if (ocultar) {
+      panel.classList.add('hidden');
+      panel.style.setProperty('display', 'none', 'important');
+      if (wrapper) {
+        wrapper.classList.add('hidden');
+        wrapper.style.setProperty('display', 'none', 'important');
+      }
+    } else {
+      panel.classList.remove('hidden');
+      panel.style.removeProperty('display');
+      if (wrapper) {
+        wrapper.classList.remove('hidden');
+        wrapper.style.removeProperty('display');
+      }
       this.ejecutarAuditoriaIntegridad(false);
     }
   },
 
   toggleDetalleAuditoriaCenso() {
-    const wrapper = document.getElementById('auditoria-censo-detalle-wrapper');
+    if (!this.esRolInspectorOAdmin()) return;
+    const wrapper = document.getElementById('cuerpo-detalle-auditoria-censo') || document.getElementById('auditoria-censo-detalle-wrapper');
     if (!wrapper) return;
     wrapper.classList.toggle('hidden');
     if (!wrapper.classList.contains('hidden')) {
@@ -12783,10 +12979,20 @@ const app = {
   },
 
   irAAuditoriaIntegridad() {
+    if (!this.esRolInspectorOAdmin()) {
+      this.mostrarNotificacionToast('🔒 Acceso restringido: La Auditoría de Integridad es exclusiva para Inspector Zootécnico y Administrador.', 'warning');
+      return;
+    }
     this.cambiarTab('censo');
+    const wrapper = document.getElementById('panel-auditoria-integridad');
     const panel = document.getElementById('panel-auditoria-censo') || document.getElementById('panel-auditoria-integridad-censo');
+    if (wrapper) {
+      wrapper.classList.remove('hidden');
+      wrapper.style.removeProperty('display');
+    }
     if (panel) {
       panel.classList.remove('hidden');
+      panel.style.removeProperty('display');
       this.ejecutarAuditoriaIntegridad(true);
     }
   },
