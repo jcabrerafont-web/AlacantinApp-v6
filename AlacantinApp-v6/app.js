@@ -280,7 +280,7 @@ const app = {
 
     // Comprobar si hay hash en la URL para cambiar de pestaña directamente (por defecto: Mi Censo)
     const hash = window.location.hash.replace('#', '');
-    if (['censo', 'alta', 'registro', 'puesta', 'herramientas', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'inspeccion-insitu', 'admin'].includes(hash)) {
+    if (['censo', 'estandar', 'alta', 'registro', 'puesta', 'herramientas', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'inspeccion-insitu', 'admin'].includes(hash)) {
       this.cambiarTab(hash);
     } else {
       this.cambiarTab('censo');
@@ -728,9 +728,17 @@ const app = {
       if (!errA && animalesRemotos && animalesRemotos.length > 0) {
         await this.db.putBatch('animales', animalesRemotos);
         this.estado.animales = animalesRemotos.filter(a => this.perteneceAUsuarioActivo(a));
+        this.poblarSelectores();
         this.renderizarCenso();
         this.actualizarKPIs();
       }
+      try {
+        const { data: explotacionesRemotas, error: errE } = await this.supabaseClient.from('explotaciones').select('*');
+        if (!errE && explotacionesRemotas && explotacionesRemotas.length > 0) {
+          await this.db.putBatch('explotaciones', explotacionesRemotas);
+          this.estado.explotaciones = explotacionesRemotas.filter(e => this.perteneceAUsuarioActivo(e));
+        }
+      } catch (_) {}
       // Sincronizar perfiles de usuarios y solicitudes de inspección si existen tablas en Supabase
       try {
         const { data: usuariosRemotos, error: errU } = await this.supabaseClient.from('perfiles_usuarios').select('*');
@@ -5207,10 +5215,20 @@ const app = {
 
     const rolActual = this.obtenerRolUsuarioActual();
 
+    // Cerrar modal de Guía de Campo si estaba abierto al cambiar de pestaña
+    document.getElementById('modal-guia-campo')?.classList.add('hidden');
+
+    // En Modo Visitante, garantizar que nunca se pidan credenciales, REGA ni aviario al navegar por vistas públicas
+    if (rolActual === 'visitante') {
+      this.estado.modoVisitante = true;
+      this.cerrarModalAuthAcceso();
+      this.cerrarModalAviario();
+    }
+
     // Protección RBAC estricta para el Panel de Administración (Vista exclusiva Administrador)
     if (tabName === 'admin' && rolActual !== 'administrador') {
       this.mostrarNotificacionToast('🔒 Acceso restringido: El Panel de Administración es exclusivo para usuarios con rol Administrador.', 'warning');
-      return this.cambiarTab('herramientas');
+      return this.cambiarTab(rolActual === 'visitante' ? 'censo' : 'herramientas');
     }
 
     // Protección RBAC estricta para Modo Inspección In Situ (Exclusivo Inspector Zootécnico y Administrador)
@@ -5219,30 +5237,46 @@ const app = {
       return this.cambiarTab('censo');
     }
 
-    // Protección Modo Visitante (Solo lectura: Censo, Pedigrí, Herramientas y Guía de Campo ESGA025)
+    // Protección Modo Visitante (Solo lectura: Estándar Racial, Guía de Campo, Censo Público, Pedigrí, Mapa GIS)
     if (rolActual === 'visitante' && ['alta', 'registro', 'lotes', 'inspeccion-insitu', 'admin'].includes(tabName)) {
       this.mostrarNotificacionToast('👀 Modo Visitante (Solo Lectura): Inicia sesión o regístrate para gestionar el censo, lotes o inspecciones.', 'info');
       return this.cambiarTab('censo');
     }
 
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(el => {
+      el.classList.remove('active');
+    });
     const targetTab = document.getElementById(domSectionId);
     if (targetTab) {
+      targetTab.classList.remove('hidden');
       targetTab.classList.add('active');
     }
 
-    // Determinar cuál de los 4 botones de la Barra Inferior Móvil (Nivel 1) está activo
+    // Asegurar sincronización dinámica de iconos, textos y eventos onclick de la barra inferior según el rol
+    this.configurarBarraInferiorSegunRol(rolActual);
+
+    // Determinar cuál de los botones de la Barra Inferior Móvil (Nivel 1) está activo
     const modulosNivel2 = ['inspeccion-insitu', 'inspeccion', 'pedigri', 'lotes', 'mapa-gis', 'germoplasma', 'admin'];
     let botonNivel1Activo = 'censo';
-    if (esAltaRapida) {
-      botonNivel1Activo = 'alta';
-    } else if (tabName === 'puesta') {
-      botonNivel1Activo = 'puesta';
-    } else if (tabName === 'herramientas' || modulosNivel2.includes(tabName)) {
-      botonNivel1Activo = 'herramientas';
+    if (rolActual === 'visitante') {
+      if (tabName === 'estandar' || tabName === 'inspeccion') {
+        botonNivel1Activo = 'censo'; // Botón 1 Visitante: 📖 Estándar Racial
+      } else if (tabName === 'guia-campo') {
+        botonNivel1Activo = 'puesta'; // Botón 2 Visitante: 📋 Guía de Campo
+      } else {
+        botonNivel1Activo = 'herramientas'; // Botón 3 Visitante: 🔍 Censo Público (censo, pedigri, mapa-gis, etc.)
+      }
+    } else {
+      if (esAltaRapida) {
+        botonNivel1Activo = 'alta';
+      } else if (tabName === 'puesta') {
+        botonNivel1Activo = 'puesta';
+      } else if (tabName === 'herramientas' || modulosNivel2.includes(tabName) || tabName === 'estandar') {
+        botonNivel1Activo = 'herramientas';
+      }
     }
 
-    // Actualizar estilos de los 4 botones de la Barra Inferior Fija
+    // Actualizar estilos de los botones de la Barra Inferior Fija
     const mapaBotonesInferiores = {
       censo: document.getElementById('nav-bottom-censo'),
       alta: document.getElementById('nav-bottom-alta'),
@@ -5265,15 +5299,16 @@ const app = {
       }
     });
 
-    // Actualizar sub-barra contextual en cabecera (Botón Volver al Centro de Control + Pastilla de Sección)
+    // Actualizar sub-barra contextual en cabecera (Botón Volver + Pastilla de Sección)
     const btnVolverHerramientas = document.getElementById('btn-volver-herramientas');
     const pillSeccion = document.getElementById('header-active-section-pill');
     const titulosSeccion = {
-      'censo': '🐓 Mi Censo Oficial ESGA025',
+      'censo': rolActual === 'visitante' ? '🔍 Censo Público Oficial ESGA025' : '📊 Mi Censo Oficial ESGA025',
+      'estandar': '📖 Estándar Racial Oficial ESGA025',
       'alta': '➕ Alta Rápida (Individual / Pollada)',
       'registro': '➕ Alta Rápida (Individual / Pollada)',
       'puesta': '🥚 Control de Puesta & Ponedero RFID',
-      'herramientas': '⚙️ Centro de Control Zootécnico',
+      'herramientas': '🛠️ Centro de Control Zootécnico',
       'inspeccion-insitu': '📋 Módulo de Inspección Zootécnica (100p) & Actas',
       'inspeccion': '📋 Calificación Morfológica RP ➔ RD/RM',
       'pedigri': '🧬 Pedigrí 5Gen & Consanguinidad Wright',
@@ -5285,6 +5320,18 @@ const app = {
 
     const level2Bar = document.getElementById('header-level2-bar');
     if (btnVolverHerramientas) {
+      if (rolActual === 'visitante') {
+        btnVolverHerramientas.setAttribute('onclick', "app.cambiarTab('censo')");
+        btnVolverHerramientas.onclick = () => this.cambiarTab('censo');
+        const spanVolver = btnVolverHerramientas.querySelector('span');
+        if (spanVolver) spanVolver.textContent = '🔍 Censo Público';
+      } else {
+        btnVolverHerramientas.setAttribute('onclick', "app.cambiarTab('herramientas')");
+        btnVolverHerramientas.onclick = () => this.cambiarTab('herramientas');
+        const spanVolver = btnVolverHerramientas.querySelector('span');
+        if (spanVolver) spanVolver.textContent = '🛠️ Herramientas';
+      }
+
       if (modulosNivel2.includes(tabName)) {
         btnVolverHerramientas.classList.remove('hidden');
         btnVolverHerramientas.classList.add('inline-flex');
@@ -5302,12 +5349,32 @@ const app = {
       }
     }
     if (pillSeccion) {
-      pillSeccion.textContent = titulosSeccion[tabName] || '🐓 Mi Censo Oficial ESGA025';
+      pillSeccion.textContent = titulosSeccion[tabName] || (rolActual === 'visitante' ? '🔍 Censo Público Oficial ESGA025' : '📊 Mi Censo Oficial ESGA025');
     }
 
     window.location.hash = esAltaRapida ? 'alta' : tabName;
 
-    if (tabName === 'puesta' || tabName === 'inspeccion') {
+    if (tabName === 'censo') {
+      this.renderizarCenso();
+      this.actualizarKPIs();
+      if (rolActual === 'visitante' && (!Array.isArray(this.estado.animales) || this.estado.animales.length === 0)) {
+        this.cargarDatos().then(() => {
+          this.poblarSelectores();
+          this.renderizarCenso();
+          this.actualizarKPIs();
+        }).catch(() => {});
+      }
+    } else if (tabName === 'estandar') {
+      this.renderizarEstandarRacialESGA025();
+    } else if (tabName === 'pedigri') {
+      this.poblarSelectores();
+      const selPedigri = document.getElementById('pedigri-animal-select');
+      const idSeleccionado = selPedigri?.value || (this.estado.animales?.[0]?.id || '');
+      if (idSeleccionado) {
+        if (selPedigri && !selPedigri.value) selPedigri.value = idSeleccionado;
+        this.renderizarPedigri(idSeleccionado);
+      }
+    } else if (tabName === 'puesta' || tabName === 'inspeccion') {
       setTimeout(() => {
         this.renderizarAnaliticaPuesta();
         if (typeof this.renderizarModuloIncubacion === 'function') {
@@ -8729,11 +8796,79 @@ const app = {
     `).join('');
   },
 
+  renderizarEstandarRacialESGA025() {
+    const grid = document.getElementById('estandar-racial-12-regiones-grid');
+    if (!grid) return;
+    const regiones = this.obtener12RegionesEstandarESGA025();
+    grid.innerHTML = regiones.map(r => `
+      <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 transition space-y-2 text-xs flex flex-col justify-between">
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-800">
+            <span class="font-black text-amber-400 text-sm">${this.escaparHtml(r.nombre)}</span>
+            <span class="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-mono text-[10px] border border-slate-800">Región #${r.num}</span>
+          </div>
+          <p class="text-[11px] text-slate-200"><strong class="text-amber-300">Estándar Oficial:</strong> ${this.escaparHtml(r.estandar)}</p>
+          ${r.detalleCromatico ? `<p class="text-[11px] text-cyan-300"><strong class="text-cyan-400">Detalle cromático:</strong> ${this.escaparHtml(r.detalleCromatico)}</p>` : ''}
+          ${r.rangosPonderales ? `<p class="text-[11px] text-emerald-300"><strong class="text-emerald-400">Rangos ponderales:</strong> ${this.escaparHtml(r.rangosPonderales)}</p>` : ''}
+        </div>
+        <div class="space-y-1.5 pt-2 border-t border-slate-900">
+          <div class="p-2 rounded bg-rose-950/40 border border-rose-900/60 text-[11px] text-rose-200">
+            <strong class="text-rose-400 block uppercase text-[10px]">Taras / Descalificaciones:</strong>
+            ${this.escaparHtml(r.defectosTaras)}
+          </div>
+          <div class="text-[10px] text-emerald-300 font-medium">
+            <i class="fa-solid fa-check-circle mr-1"></i>${this.escaparHtml(r.consejoCampo)}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  abrirModalEstandarRacial() {
+    if (this.obtenerRolUsuarioActual() === 'visitante') {
+      this.estado.modoVisitante = true;
+      this.cerrarModalAuthAcceso();
+      this.cerrarModalAviario();
+    }
+    this.cerrarModalGuiaCampo();
+    this.renderizarEstandarRacialESGA025();
+    const modalEstandar = document.getElementById('modal-estandar-racial');
+    if (modalEstandar) {
+      modalEstandar.classList.remove('hidden');
+    }
+    this.cambiarTab('estandar');
+  },
+
+  cerrarModalEstandarRacial() {
+    this.cambiarTab('censo');
+  },
+
+  abrirAsistenteMorfologicoModal() {
+    this.abrirModalGuiaCampo();
+  },
+
   abrirModalGuiaCampo() {
+    if (this.obtenerRolUsuarioActual() === 'visitante') {
+      this.estado.modoVisitante = true;
+      this.cerrarModalAuthAcceso();
+      this.cerrarModalAviario();
+    }
     this.renderizarGuiaCampo12Regiones('');
     const inp = document.getElementById('input-buscar-guia-campo');
     if (inp) inp.value = '';
     document.getElementById('modal-guia-campo')?.classList.remove('hidden');
+
+    // En Modo Visitante, resaltar el Botón 2 (📋 Guía de Campo) en la barra inferior
+    if (this.obtenerRolUsuarioActual() === 'visitante') {
+      const btnCenso = document.getElementById('nav-bottom-censo');
+      const btnPuesta = document.getElementById('nav-bottom-puesta');
+      const btnHerramientas = document.getElementById('nav-bottom-herramientas');
+      const claseInactiva = 'bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 font-bold transition-all';
+      const claseActiva = 'bottom-nav-btn flex flex-col items-center justify-center py-2 px-1 rounded-xl border border-amber-500/60 bg-amber-500/15 text-amber-300 font-black shadow-inner transition-all';
+      if (btnCenso) btnCenso.className = claseInactiva;
+      if (btnHerramientas) btnHerramientas.className = claseInactiva;
+      if (btnPuesta) btnPuesta.className = claseActiva;
+    }
   },
 
   cerrarModalGuiaCampo() {
@@ -9995,6 +10130,142 @@ const app = {
     );
   },
 
+  configurarBarraInferiorSegunRol(rolInput = null) {
+    const rol = (rolInput || this.obtenerRolUsuarioActual() || 'visitante').toLowerCase();
+    const navBottomGrid = document.querySelector('#barra-inferior-navegacion > div');
+    const btnCenso = document.getElementById('nav-bottom-censo');
+    const btnAlta = document.getElementById('nav-bottom-alta');
+    const btnPuesta = document.getElementById('nav-bottom-puesta');
+    const btnHerramientas = document.getElementById('nav-bottom-herramientas');
+
+    const setContenidoBoton = (btn, icono, texto, onclickAttr, handlerFn) => {
+      if (!btn) return;
+      const spans = btn.querySelectorAll('span');
+      if (spans.length >= 2) {
+        spans[0].textContent = icono;
+        spans[1].textContent = texto;
+      } else {
+        btn.innerHTML = `
+          <span class="text-lg leading-none mb-1">${icono}</span>
+          <span class="text-[11px] sm:text-xs tracking-tight leading-tight">${texto}</span>
+        `;
+      }
+      btn.setAttribute('onclick', onclickAttr);
+      btn.onclick = handlerFn;
+    };
+
+    if (rol === 'visitante') {
+      // 1. Ocultar el botón de Alta Rápida (#nav-bottom-alta)
+      if (btnAlta) {
+        btnAlta.classList.add('hidden');
+        btnAlta.style.setProperty('display', 'none', 'important');
+      }
+      if (navBottomGrid) {
+        navBottomGrid.classList.remove('grid-cols-4');
+        navBottomGrid.classList.add('grid-cols-3');
+      }
+
+      // 2. Cambiar dinámicamente los iconos, textos y eventos onclick de los 3 botones visibles:
+      // Botón 1: 📖 Estándar Racial ➔ abrirModalEstandarRacial() / cambiarTab('estandar')
+      if (btnCenso) {
+        btnCenso.classList.remove('hidden');
+        btnCenso.style.removeProperty('display');
+        setContenidoBoton(
+          btnCenso,
+          '📖',
+          'Estándar Racial',
+          "app.abrirModalEstandarRacial()",
+          () => this.abrirModalEstandarRacial()
+        );
+      }
+
+      // Botón 2: 📋 Guía de Campo ➔ abrirModalGuiaCampo()
+      if (btnPuesta) {
+        btnPuesta.classList.remove('hidden');
+        btnPuesta.style.removeProperty('display');
+        setContenidoBoton(
+          btnPuesta,
+          '📋',
+          'Guía de Campo',
+          "app.abrirModalGuiaCampo()",
+          () => this.abrirModalGuiaCampo()
+        );
+      }
+
+      // Botón 3: 🔍 Censo Público ➔ cambiarTab('censo')
+      if (btnHerramientas) {
+        btnHerramientas.classList.remove('hidden');
+        btnHerramientas.style.removeProperty('display');
+        setContenidoBoton(
+          btnHerramientas,
+          '🔍',
+          'Censo Público',
+          "app.cambiarTab('censo')",
+          () => this.cambiarTab('censo')
+        );
+      }
+    } else {
+      // Usuarios Autenticados (rol !== 'visitante'):
+      // Restaurar el botón de Alta Rápida y los 4 botones de gestión completa
+      if (navBottomGrid) {
+        navBottomGrid.classList.remove('grid-cols-3');
+        navBottomGrid.classList.add('grid-cols-4');
+      }
+
+      // [📊 Mi Censo]
+      if (btnCenso) {
+        btnCenso.classList.remove('hidden');
+        btnCenso.style.setProperty('display', 'flex', 'important');
+        setContenidoBoton(
+          btnCenso,
+          '📊',
+          'Mi Censo',
+          "app.cambiarTab('censo')",
+          () => this.cambiarTab('censo')
+        );
+      }
+
+      // [➕ Alta Rápida]
+      if (btnAlta) {
+        btnAlta.classList.remove('hidden');
+        btnAlta.style.setProperty('display', 'flex', 'important');
+        setContenidoBoton(
+          btnAlta,
+          '➕',
+          'Alta Rápida',
+          "app.cambiarTab('alta')",
+          () => this.cambiarTab('alta')
+        );
+      }
+
+      // [🥚 Puesta & RFID]
+      if (btnPuesta) {
+        btnPuesta.classList.remove('hidden');
+        btnPuesta.style.setProperty('display', 'flex', 'important');
+        setContenidoBoton(
+          btnPuesta,
+          '🥚',
+          'Puesta & RFID',
+          "app.cambiarTab('puesta')",
+          () => this.cambiarTab('puesta')
+        );
+      }
+
+      // [🛠️ Herramientas]
+      if (btnHerramientas) {
+        btnHerramientas.classList.remove('hidden');
+        btnHerramientas.style.setProperty('display', 'flex', 'important');
+        setContenidoBoton(
+          btnHerramientas,
+          '🛠️',
+          'Herramientas',
+          "app.cambiarTab('herramientas')",
+          () => this.cambiarTab('herramientas')
+        );
+      }
+    }
+  },
+
   aplicarPermisosRBAC() {
     const rol = this.obtenerRolUsuarioActual();
     const esInspectorOAdmin = this.esRolInspectorOAdmin(rol);
@@ -10010,6 +10281,8 @@ const app = {
     const bannerVisitante = document.getElementById('banner-visitante-lectura');
     const panelSolicitudesInSitu = document.getElementById('panel-solicitudes-inspeccion-insitu');
     const fichaAviarioCenso = document.getElementById('censo-ficha-aviario-criador');
+    const cabeceraPublicaVisitante = document.getElementById('censo-cabecera-publica-visitante');
+    const btnMfVincularRfid = document.getElementById('btn-mf-vincular-rfid');
 
     // Helper estricto para aplicar o retirar 'display: none !important;'
     const setVisibilidadEstricta = (el, visible, displayVisible = '') => {
@@ -10128,16 +10401,14 @@ const app = {
       }
     }
 
-    // 7. Visibilidad de pestañas de escritura vs solo lectura (Visitante)
+    // 7. Visibilidad de pestañas y adaptación dinámica de la barra inferior (Visitante vs Usuarios Autenticados)
+    this.configurarBarraInferiorSegunRol(rol);
+
     const tabRegistroSection = document.getElementById('tab-registro');
-    const navBottomGrid = document.querySelector('#barra-inferior-navegacion > div');
     if (rol === 'visitante') {
       setVisibilidadEstricta(btnNavBottomAlta, false);
       setVisibilidadEstricta(btnTabRegistro, false);
-      if (navBottomGrid) {
-        navBottomGrid.classList.remove('grid-cols-4');
-        navBottomGrid.classList.add('grid-cols-3');
-      }
+      setVisibilidadEstricta(btnMfVincularRfid, false);
       if (tabRegistroSection) {
         tabRegistroSection.classList.remove('active');
         tabRegistroSection.classList.add('hidden');
@@ -10148,19 +10419,18 @@ const app = {
       }
       btnTabLotes?.classList.add('opacity-50');
       fichaAviarioCenso?.classList.add('hidden');
+      cabeceraPublicaVisitante?.classList.remove('hidden');
     } else {
       setVisibilidadEstricta(btnNavBottomAlta, true, 'flex');
       setVisibilidadEstricta(btnTabRegistro, true);
-      if (navBottomGrid) {
-        navBottomGrid.classList.remove('grid-cols-3');
-        navBottomGrid.classList.add('grid-cols-4');
-      }
+      setVisibilidadEstricta(btnMfVincularRfid, true);
       if (tabRegistroSection) {
         tabRegistroSection.classList.remove('hidden');
       }
       btnTabRegistro?.classList.remove('opacity-50');
       btnTabLotes?.classList.remove('opacity-50');
       fichaAviarioCenso?.classList.remove('hidden');
+      cabeceraPublicaVisitante?.classList.add('hidden');
     }
 
     // 8. Actualizar badge de rol en Inspección In Situ
@@ -13406,6 +13676,10 @@ const app = {
 // Exponer funciones globales de navegación, sesión y desbloqueo de interfaz
 window.usuarioActual = null;
 window.cambiarTab = (tabName) => app.cambiarTab(tabName);
+window.abrirModalEstandarRacial = () => app.abrirModalEstandarRacial();
+window.cerrarModalEstandarRacial = () => app.cerrarModalEstandarRacial();
+window.abrirModalGuiaCampo = () => app.abrirModalGuiaCampo();
+window.cerrarModalGuiaCampo = () => app.cerrarModalGuiaCampo();
 window.actualizarUI = () => app.actualizarUI();
 window.iniciarSesion = (event) => app.iniciarSesion(event);
 window.completarRegistro = (event) => app.completarRegistro(event);
